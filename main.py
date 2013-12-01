@@ -101,7 +101,7 @@ class EffectTracker:
         self.toggles = {}
 
 class State:
-    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False):
+    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False, trickOk=False):
         self.step = step
         self.action = action
         self.durabilityState = durabilityState
@@ -112,6 +112,7 @@ class State:
         self.progressOk = progressOk
         self.cpOk = cpOk
         self.durabilityOk = durabilityOk
+        self.trickOk = trickOk
 
 # Simulation Function
 def simSynth(individual, synth, verbose=True, debug=False):
@@ -123,11 +124,13 @@ def simSynth(individual, synth, verbose=True, debug=False):
     stepCount = 0
     wastedActions = 0
     effects = EffectTracker()
+    trickUses = 0
 
     # End state checks
     progressOk = False
     cpOk = False
     durabilityOk = False
+    trickOk = False
 
     if verbose:
         print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
@@ -231,6 +234,10 @@ def simSynth(individual, synth, verbose=True, debug=False):
             if action.qualityIncreaseMultiplier > 0 and greatStrides.name in effects.countDowns:
                 del effects.countDowns[greatStrides.name]
 
+            if action == tricksOfTheTrade:
+                trickUses += 1
+                cpState += 20
+
             # Decrement countdowns
             for countDown in list(effects.countDowns.keys()):
                 effects.countDowns[countDown] -= 1
@@ -271,7 +278,11 @@ def simSynth(individual, synth, verbose=True, debug=False):
     if durabilityState >= 0 and progressState >= synth.recipe.difficulty:
         durabilityOk = True
 
-    finalState = State(stepCount,individual[-1].name,durabilityState,cpState,qualityState,progressState,wastedActions,progressOk,cpOk,durabilityOk)
+    if trickUses < synth.maxTrickUses:
+        trickOk = True
+
+    finalState = State(stepCount, individual[-1].name, durabilityState, cpState, qualityState, progressState,
+                       wastedActions, progressOk, cpOk, durabilityOk, trickOk)
 
     if verbose:
         print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
@@ -302,7 +313,8 @@ def generateInitialGuess(synth, seqLength):
 PENALTY = 10000
 SEQLENGTH = 20
 me = Crafter(136,137,252,25)
-myRecipe = Recipe(10,45,60,0,629)
+#myRecipe = Recipe(10,45,60,0,629)
+myRecipe = Recipe(26,45,40,0,1332)
 mySynth = Synth(me, myRecipe)
 
 # Actions
@@ -330,6 +342,7 @@ byregotsBlessing = Action("Byregot's Blessing", durabilityCost=10, cpCost=24, su
 mastersMend = Action("Master's Mend", cpCost=92)
 mastersMend2 = Action("Master's Mend II", cpCost=160)
 rumination = Action("Rumination")
+tricksOfTheTrade = Action("Tricks Of The Trade")
 
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
@@ -343,7 +356,8 @@ greatStrides = Action("Great Strides", cpCost=32, aType='countdown', activeTurns
 ingenuity = Action("Ingenuity", cpCost=24, aType="countdown", activeTurns=5)
 ingenuity2 = Action("Ingenuity II", cpCost=32, aType="countdown", activeTurns=5)
 
-myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand, wasteNot]
+myActions = [dummyAction, basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade,
+             rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
 
 # Evaluation function
@@ -415,10 +429,6 @@ def main():
     return pop, stats, hof
 
 def mainSim():
-    me = Crafter(136,137,252,25)
-    myRecipe = Recipe(10,45,60,0,629)
-    mySynth = Synth(me, myRecipe)
-
     # Test cases
     #test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
     #         steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
@@ -434,9 +444,9 @@ def mainSim():
     #
     #test = [innerQuiet, steadyHand2, wasteNot2, basicTouch, basicTouch, basicTouch, basicTouch, steadyHand2, greatStrides, byregotsBlessing, standardSynthesis]
 
-    test = [innerQuiet, steadyHand2, ingenuity2, ingenuity, basicTouch, basicTouch, basicTouch, basicTouch, standardSynthesis]
+    test = [innerQuiet, steadyHand2, ingenuity2, ingenuity, basicTouch, basicTouch, basicTouch, basicTouch, tricksOfTheTrade, basicSynth]
 
     simSynth(test, mySynth, False, True)
 
 if __name__ == "__main__":
-    mainSim()
+    main()
