@@ -343,7 +343,6 @@ myRecipe = Recipe(26,45,40,0,1332)
 mySynth = Synth(me, myRecipe, maxTrickUses=2, useConditions=True)
 
 # Actions
-#Tricks of the Trade
 #Reclaim
 
 dummyAction = Action("______________")
@@ -451,7 +450,7 @@ def main():
     algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=50, stats=stats, halloffame=hof, verbose=True)
 
     best_ind = tools.selBest(pop, 1)[0]
-    print("\nRandom Seed: %i" % seed)
+    print("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
     simSynth(best_ind, mySynth)
 
     return pop, stats, hof
