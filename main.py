@@ -75,18 +75,16 @@ class Synth:
         return round(levelCorrectedQuality, 0)
 
 class Action:
-    def __init__(self, name, durabilityCost=0, cpCost=0, successProbability=1.0, qualityIncreaseMultiplier=0.0, progressIncreaseMultiplier=0.0, type='immediate', activeTurns=1):
+    def __init__(self, name, durabilityCost=0, cpCost=0, successProbability=1.0, qualityIncreaseMultiplier=0.0, progressIncreaseMultiplier=0.0, aType='immediate', activeTurns=1):
         self.name = name
         self.durabilityCost = durabilityCost
         self.cpCost = cpCost
         self.successProbability = successProbability
         self.qualityIncreaseMultiplier = qualityIncreaseMultiplier
         self.progressIncreaseMultiplier = progressIncreaseMultiplier
-        self.type = type
-        if type == "immediate":
-            self.activeTurns = None         # save some space
-        else:
-            self.activeTurns = activeTurns
+        self.type = aType
+        if aType != "immediate":
+            self.activeTurns = activeTurns      # Save some space
 
     def __eq__(self, other):
         if self.name == other.name:
@@ -251,8 +249,8 @@ hastyTouch = Action("Hasty Touch", durabilityCost=10, cpCost=0, successProbabili
 mastersMend = Action("Master's Mend", durabilityCost=-30, cpCost=92)
 mastersMend2 = Action("Master's Mend II", durabilityCost=-60, cpCost=150)
 
-innerQuiet = Action("Inner Quiet", cpCost=18, type="countup")
-manipulation = Action("Manipulation", cpCost=88, type='countdown', activeTurns=3)
+innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
+manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
 
 myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
