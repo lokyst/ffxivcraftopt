@@ -146,15 +146,24 @@ def simSynth(individual, synth, verbose=True):
         else:
             control = synth.crafter.control
 
-        if steadyHand.name in effects.countDowns:
+        if steadyHand2.name in effects.countDowns:
+            successProbability = action.successProbability + 0.3        # What is effect of having both active? Assume 2 always overrides 1 but does not overwrite
+        elif steadyHand.name in effects.countDowns:
             successProbability = action.successProbability + 0.2
         else:
             successProbability = action.successProbability
 
-        if wasteNot.name in effects.countDowns:
+        if wasteNot.name in effects.countDowns or wasteNot2.name in effects.countDowns:
             durabilityCost = 0.5 * action.durabilityCost
         else:
             durabilityCost = action.durabilityCost
+
+        if action == flawlessSynthesis:
+            progressGain = 0.9 * 40
+        elif action == pieceByPiece:
+            progressGain = 0.9 * (synth.recipe.difficulty - progressState)/3
+        else:
+            progressGain = action.progressIncreaseMultiplier * successProbability * synth.baseProgressIncrease
 
         # Occur if a dummy action
         #==================================
@@ -165,7 +174,7 @@ def simSynth(individual, synth, verbose=True):
         #==================================
         else:
             # State tracking
-            progressState += action.progressIncreaseMultiplier * successProbability * synth.baseProgressIncrease
+            progressState += progressGain
             qualityState += action.qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(control)
             durabilityState -= durabilityCost
             cpState -= action.cpCost
@@ -248,6 +257,17 @@ myRecipe = Recipe(10,45,60,0,629)
 mySynth = Synth(me, myRecipe)
 
 # Actions
+#Tricks of the Trade
+#Rumination
+#Comfort Zone
+#Byregot's Blessing
+#Ingenuity
+#Ingenuity II
+#Great Strides
+#Observe
+#Reclaim
+#Innovation
+
 dummyAction = Action("______________")
 
 basicSynth = Action("Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1)
@@ -256,7 +276,8 @@ carefulSynthesis = Action("Careful Synthesis", durabilityCost=10, successProbabi
 carefulSynthesis2 = Action("Careful Synthesis II", durabilityCost=10, cpCost=0, successProbability=1, progressIncreaseMultiplier=1.2)
 brandSynthesis = Action("Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
 rapidSynthesis = Action("Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5)
-#flawlessSynthesis = Action("Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9)
+flawlessSynthesis = Action("Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
+pieceByPiece = Action("Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
 
 basicTouch = Action("Basic Touch", durabilityCost=10, cpCost=18, successProbability=0.7, qualityIncreaseMultiplier=1)
 standardTouch = Action("Standard Touch", durabilityCost=10, cpCost=32, successProbability=0.8, qualityIncreaseMultiplier=1.25)
@@ -269,7 +290,9 @@ mastersMend2 = Action("Master's Mend II", cpCost=150)
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
 steadyHand = Action("Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
+steadyHand2 = Action("Steady Hand II", cpCost=25, aType='countdown', activeTurns=5)
 wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
+wasteNot2 = Action("Waste Not II", cpCost=95, aType='countdown', activeTurns=8)
 
 myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand, wasteNot]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
