@@ -128,17 +128,16 @@ def simSynth(individual, synth, verbose=True, debug=False):
     effects = EffectTracker()
     trickUses = 0
 
-    if synth.useConditions:
-        # Conditions
-        pGood = 0.23
-        pExcellent = 0.01
-        pPoor = pExcellent
+    # Conditions
+    pGood = 0.23
+    pExcellent = 0.01
+    pPoor = pExcellent
 
-        # Step 1 is always normal
-        ppGood = 0
-        ppExcellent = 0
-        ppPoor = 0
-        ppNormal = 1 - (pGood + pExcellent + pPoor)
+    # Step 1 is always normal
+    ppGood = 0
+    ppExcellent = 0
+    ppPoor = 0
+    ppNormal = 1 - (pGood + pExcellent + pPoor)
 
     # End state checks
     progressOk = False
@@ -334,17 +333,8 @@ def generateInitialGuess(synth, seqLength):
 
     return myGuess
 
-# Synth details
-PENALTY = 10000
-SEQLENGTH = 20
-me = Crafter(136,137,252,25)
-#myRecipe = Recipe(10,45,60,0,629)
-myRecipe = Recipe(26,45,40,0,1332)
-mySynth = Synth(me, myRecipe, maxTrickUses=2, useConditions=True)
-
-# Actions
-#Reclaim
-
+# Define Actions
+#======================================
 dummyAction = Action("______________")
 observe = Action("Observe", cpCost=14)
 
@@ -380,66 +370,65 @@ greatStrides = Action("Great Strides", cpCost=32, aType='countdown', activeTurns
 ingenuity = Action("Ingenuity", cpCost=24, aType="countdown", activeTurns=5)
 ingenuity2 = Action("Ingenuity II", cpCost=32, aType="countdown", activeTurns=5)
 
-myActions = [dummyAction, basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade,
-             rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
-myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
-
-# Evaluation function
-def evalSeq(individual):
-    result = simSynth(individual, mySynth, verbose=False)
-    penalties = 0
-    fitness = 0
-
-    # Sum the constraint violations
-    penalties += result.wastedActions
-
-    if not result.durabilityOk:
-       penalties += 1
-
-    if not result.progressOk:
-        penalties += 1
-
-    if not result.cpOk:
-        penalties += 1
-
-    if not result.trickOk:
-        penalties += 1
-
-    fitness += result.qualityState
-    fitness -= PENALTY * penalties
-
-    return fitness,
-
-
-# ==== GA Stuff
-creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Individual", list, fitness=creator.FitnessMax)
-
-toolbox = base.Toolbox()
-
-# Attribute generator
-toolbox.register("attr_action", random.choice, myActions)
-
-# Structure initializers
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_action, SEQLENGTH)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-
-# Set initial guess
-iniGuess = creator.Individual(myInitialGuess)
-
-toolbox.register("evaluate", evalSeq)
-toolbox.register("mate", tools.cxOnePoint)
-toolbox.register("mutate", tools.mutShuffleIndexes, indpb=0.05)
-toolbox.register("select", tools.selTournament, tournsize=3)
-
-def main():
-    seed = 64
-    #seed = random.randint(0, 19770216)
+# Call to GA
+def mainGA(mySynth, myActions, penaltyWeight, seqLength, seed=None):
+    if seed is None:
+        seed = random.randint(0, 19770216)
     random.seed(seed)
 
+    myInitialGuess = generateInitialGuess(mySynth, seqLength)
+
+    # Evaluation function for GA using globals
+    def evalSeq(individual):
+        result = simSynth(individual, mySynth, verbose=False)
+        penalties = 0
+        fitness = 0
+
+        # Sum the constraint violations
+        penalties += result.wastedActions
+
+        if not result.durabilityOk:
+           penalties += 1
+
+        if not result.progressOk:
+            penalties += 1
+
+        if not result.cpOk:
+            penalties += 1
+
+        if not result.trickOk:
+            penalties += 1
+
+        fitness += result.qualityState
+        fitness -= penaltyWeight * penalties
+
+        return fitness,
+
+    # GA Stuff
+    #==============================
+    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    creator.create("Individual", list, fitness=creator.FitnessMax)
+
+    toolbox = base.Toolbox()
+
+    # Attribute generator
+    toolbox.register("attr_action", random.choice, myActions)
+
+    # Structure initializers
+    toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_action, seqLength)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    toolbox.register("evaluate", evalSeq)
+    toolbox.register("mate", tools.cxOnePoint)
+    toolbox.register("mutate", tools.mutShuffleIndexes, indpb=0.05)
+    toolbox.register("select", tools.selTournament, tournsize=3)
+
+    # Set initial guess
+    iniGuess = creator.Individual(myInitialGuess)
     pop = toolbox.population(n=300)
     pop.pop()
     pop.insert(0, iniGuess)
+
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", tools.mean)
@@ -447,15 +436,19 @@ def main():
     stats.register("min", min)
     stats.register("max", max)
 
+    # Run GA
+    #==============================
     algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=50, stats=stats, halloffame=hof, verbose=True)
 
+    # Print Best Individual
+    #==============================
     best_ind = tools.selBest(pop, 1)[0]
     print("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
     simSynth(best_ind, mySynth)
 
     return pop, stats, hof
 
-def mainSim():
+def mainSim(mySynth):
     # Test cases
     #test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
     #         steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
@@ -475,5 +468,21 @@ def mainSim():
 
     simSynth(test, mySynth, False, True)
 
+def mainRecipeWrapper():
+    # Recipe Stuff
+    #==============================
+    # Synth details
+    penaltyWeight = 10000
+    seqLength = 20
+    myCrafter = Crafter(136,137,252,25)
+    #myRecipe = Recipe(10,45,60,0,629)
+    myRecipe = Recipe(26,45,40,0,1332)
+    mySynth = Synth(myCrafter, myRecipe, maxTrickUses=2, useConditions=True)
+    myActions = [dummyAction, basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade,
+                 rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
+
+    # Call to GA
+    mainGA(mySynth, myActions, penaltyWeight, seqLength)
+
 if __name__ == "__main__":
-    main()
+    mainRecipeWrapper()
