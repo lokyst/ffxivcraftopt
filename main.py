@@ -215,6 +215,12 @@ def simSynth(individual, synth, verbose=True):
                 else:
                     wastedActions += 1
 
+            if action == byregotsBlessing:
+                if innerQuiet.name in effects.countUps:
+                    del effects.countUps[innerQuiet.name]
+                else:
+                    wastedActions += 1
+
             if action.qualityIncreaseMultiplier > 0 and greatStrides.name in effects.countDowns:
                 del effects.countDowns[greatStrides.name]
 
