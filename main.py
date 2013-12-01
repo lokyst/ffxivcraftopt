@@ -216,7 +216,7 @@ def simSynth(individual, synth, verbose=True, debug=False):
                 cpState += 8
 
             if action == rumination:
-                if innerQuiet.name in effects.countUps:
+                if innerQuiet.name in effects.countUps and effects.countUps[innerQuiet.name] > 0:
                     cpState += (21 * effects.countUps[innerQuiet.name] - effects.countUps[innerQuiet.name]**2 + 10)/2
                     del effects.countUps[innerQuiet.name]
                 else:
@@ -438,7 +438,7 @@ def mainSim():
 #flawlessSynthesis = Action("Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
 #pieceByPiece = Action("Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
 
-    test = [innerQuiet, steadyHand, wasteNot, advancedTouch, rumination, observe, observe, standardSynthesis]
+    test = [innerQuiet, steadyHand, wasteNot, carefulSynthesis, rumination, observe, observe, standardSynthesis]
 
     simSynth(test, mySynth, False, True)
 
