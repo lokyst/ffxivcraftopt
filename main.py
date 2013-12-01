@@ -37,10 +37,11 @@ class Recipe:
         self.maxQuality = maxQuality
 
 class Synth:
-    def __init__(self, crafter=Crafter(), recipe=Recipe(), maxTrickUses=0):
+    def __init__(self, crafter=Crafter(), recipe=Recipe(), maxTrickUses=0, useConditions=False):
         self.crafter = crafter
         self.recipe = recipe
         self.maxTrickUses = maxTrickUses
+        self.useConditions = useConditions
 
     def CalculateBaseProgressIncrease(self, levelDifference, craftsmanship):
         if -5 <= levelDifference <= 0:
@@ -127,6 +128,18 @@ def simSynth(individual, synth, verbose=True, debug=False):
     effects = EffectTracker()
     trickUses = 0
 
+    if synth.useConditions:
+        # Conditions
+        pGood = 0.23
+        pExcellent = 0.01
+        pPoor = pExcellent
+
+        # Step 1 is always normal
+        ppGood = 0
+        ppExcellent = 0
+        ppPoor = 0
+        ppNormal = 1 - (pGood + pExcellent + pPoor)
+
     # End state checks
     progressOk = False
     cpOk = False
@@ -172,6 +185,10 @@ def simSynth(individual, synth, verbose=True, debug=False):
         qualityIncreaseMultiplier = action.qualityIncreaseMultiplier
         if greatStrides.name in effects.countDowns:
             qualityIncreaseMultiplier *= 2
+
+        # Condition Calculation
+        if synth.useConditions:
+            qualityIncreaseMultiplier *= (1*ppNormal + 1.5*ppGood + 4*ppExcellent + 0.5*ppPoor)
 
         # Calculate final gains / losses
         bProgressGain = action.progressIncreaseMultiplier * synth.CalculateBaseProgressIncrease(levelDifference, craftsmanship)
@@ -238,6 +255,13 @@ def simSynth(individual, synth, verbose=True, debug=False):
             if action == tricksOfTheTrade:
                 trickUses += 1
                 cpState += 20
+
+            # Conditions
+            if synth.useConditions:
+                ppPoor = ppExcellent
+                ppGood = pGood * ppNormal
+                ppExcellent = pExcellent * ppNormal
+                ppNormal = 1 - (ppGood + ppExcellent + ppPoor)
 
             # Decrement countdowns
             for countDown in list(effects.countDowns.keys()):
@@ -316,7 +340,7 @@ SEQLENGTH = 20
 me = Crafter(136,137,252,25)
 #myRecipe = Recipe(10,45,60,0,629)
 myRecipe = Recipe(26,45,40,0,1332)
-mySynth = Synth(me, myRecipe)
+mySynth = Synth(me, myRecipe, maxTrickUses=2, useConditions=True)
 
 # Actions
 #Tricks of the Trade
