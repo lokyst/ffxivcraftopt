@@ -325,11 +325,11 @@ basicTouch = Action("Basic Touch", durabilityCost=10, cpCost=18, successProbabil
 standardTouch = Action("Standard Touch", durabilityCost=10, cpCost=32, successProbability=0.8, qualityIncreaseMultiplier=1.25)
 advancedTouch = Action("Advanced Touch", durabilityCost=10, cpCost=48, successProbability=0.9, qualityIncreaseMultiplier=1.5)
 hastyTouch = Action("Hasty Touch", durabilityCost=10, cpCost=0, successProbability=0.5, qualityIncreaseMultiplier=1)
+byregotsBlessing = Action("Byregot's Blessing", durabilityCost=10, cpCost=24, successProbability=0.9, qualityIncreaseMultiplier=1)
 
 mastersMend = Action("Master's Mend", cpCost=92)
-mastersMend2 = Action("Master's Mend II", cpCost=150)
+mastersMend2 = Action("Master's Mend II", cpCost=160)
 rumination = Action("Rumination")
-byregotsBlessing = Action("Byregot's Blessing", durabilityCost=10, cpCost=24, successProbability=0.9, qualityIncreaseMultiplier=1)
 
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
@@ -431,11 +431,7 @@ def mainSim():
     test = [innerQuiet, steadyHand, wasteNot2, wasteNot, advancedTouch, advancedTouch, advancedTouch, advancedTouch,
             advancedTouch, advancedTouch, advancedTouch, advancedTouch, basicSynth]
 
-#brandSynthesis = Action("Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
-#rapidSynthesis = Action("Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5)
-#pieceByPiece = Action("Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
-
-    test = [innerQuiet, wasteNot, flawlessSynthesis, observe, observe, standardSynthesis]
+    test = [innerQuiet, steadyHand, basicTouch, standardTouch, advancedTouch, hastyTouch, byregotsBlessing, mastersMend, mastersMend2, standardSynthesis]
 
     simSynth(test, mySynth, False, True)
 
