@@ -40,31 +40,28 @@ class Synth:
     def __init__(self, crafter=Crafter(), recipe=Recipe()):
         self.crafter = crafter
         self.recipe = recipe
-        self.levelDifference = crafter.level - recipe.level
-        self.baseProgressIncrease = self.CalculateBaseProgressIncrease()
-        #self.baseQualityIncrease = self.CalculateBaseQualityIncrease()
 
-    def CalculateBaseProgressIncrease(self):
-        if -5 <= self.levelDifference <= 0:
-            levelCorrectionFactor = 0.10 * self.levelDifference
-        elif 0 < self.levelDifference <= 5:
-            levelCorrectionFactor = 0.05 * self.levelDifference
-        elif 5 < self.levelDifference <= 15:
-            levelCorrectionFactor = 0.022 * self.levelDifference + 0.15
+    def CalculateBaseProgressIncrease(self, levelDifference, craftsmanship):
+        if -5 <= levelDifference <= 0:
+            levelCorrectionFactor = 0.10 * levelDifference
+        elif 0 < levelDifference <= 5:
+            levelCorrectionFactor = 0.05 * levelDifference
+        elif 5 < levelDifference <= 15:
+            levelCorrectionFactor = 0.022 * levelDifference + 0.15
         else:
-            levelCorrectionFactor = 0.022 * self.levelDifference + 0.15
+            levelCorrectionFactor = 0.022 * levelDifference + 0.15
         # Failed data points
         # Ldiff, Craftsmanship, Actual Progress, Expected Progress
         # 15, 136, 44, 45
 
-        baseProgress = 0.21 * self.crafter.craftsmanship + 1.6
+        baseProgress = 0.21 * craftsmanship + 1.6
         levelCorrectedProgress = baseProgress * (1 + levelCorrectionFactor)
 
         return round(levelCorrectedProgress, 0)
 
-    def CalculateBaseQualityIncrease(self, control):
-        if -5 <= self.levelDifference <= 0:
-            levelCorrectionFactor = 0.05 * self.levelDifference
+    def CalculateBaseQualityIncrease(self, levelDifference, control):
+        if -5 <= levelDifference <= 0:
+            levelCorrectionFactor = 0.05 * levelDifference
         else:
             levelCorrectionFactor = 0
 
@@ -140,13 +137,19 @@ def simSynth(individual, synth, verbose=True):
         # Occur regardless of dummy actions
         #==================================
         stepCount += 1
-        control = synth.crafter.control
 
+        # Add effect modifiers
+        craftsmanship = synth.crafter.craftsmanship
+        control = synth.crafter.control
         if innerQuiet.name in effects.countUps:
             control *= (1 + 0.2 * effects.countUps[innerQuiet.name])
 
         if innovation.name in effects.countDowns:
             control *= 1.5
+
+        levelDifference = synth.crafter.level - synth.recipe.level
+        if ingenuity.name in effects.countDowns:
+            levelDifference = 0
 
         if steadyHand2.name in effects.countDowns:
             successProbability = action.successProbability + 0.3        # What is effect of having both active? Assume 2 always overrides 1 but does not overwrite
@@ -155,25 +158,24 @@ def simSynth(individual, synth, verbose=True):
         else:
             successProbability = action.successProbability
 
-        if wasteNot.name in effects.countDowns or wasteNot2.name in effects.countDowns:
-            durabilityCost = 0.5 * action.durabilityCost
-        else:
-            durabilityCost = action.durabilityCost
-
         qualityIncreaseMultiplier = action.qualityIncreaseMultiplier
         if greatStrides.name in effects.countDowns:
             qualityIncreaseMultiplier *= 2
 
+        # Calculate final gains / losses
+        progressGain = action.progressIncreaseMultiplier * successProbability * synth.CalculateBaseProgressIncrease(levelDifference, craftsmanship)
         if action == flawlessSynthesis:
             progressGain = 0.9 * 40
         elif action == pieceByPiece:
             progressGain = 0.9 * (synth.recipe.difficulty - progressState)/3
-        else:
-            progressGain = action.progressIncreaseMultiplier * successProbability * synth.baseProgressIncrease
 
-        qualityGain = qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(control)
+        qualityGain = qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(levelDifference, control)
         if action == byregotsBlessing:
             qualityGain *= (1 + 0.2 * effects.countUps[innerQuiet.name])
+
+        durabilityCost = action.durabilityCost
+        if wasteNot.name in effects.countDowns or wasteNot2.name in effects.countDowns:
+            durabilityCost = 0.5 * action.durabilityCost
 
         # Occur if a dummy action
         #==================================
@@ -256,7 +258,7 @@ def simSynth(individual, synth, verbose=True):
     return finalState
 
 def generateInitialGuess(synth, seqLength):
-    nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.baseProgressIncrease) )
+    nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.CalculateBaseProgressIncrease((synth.crafter.level-synth.recipe.level), synth.crafter.craftsmanship)) )
 
     myGuess = seqLength * [dummyAction]
     for i in range(nSynths):
@@ -316,6 +318,7 @@ wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
 wasteNot2 = Action("Waste Not II", cpCost=95, aType='countdown', activeTurns=8)
 innovation = Action("Innovation", cpCost=18, aType='countdown', activeTurns=3)
 greatStrides = Action("Great Strides", cpCost=32, aType='countdown', activeTurns=3)
+ingenuity = Action("Ingenuity", cpCost=42, aType="countdown", activeTurns=5)
 
 myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand, wasteNot]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
