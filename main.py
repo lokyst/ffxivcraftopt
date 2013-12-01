@@ -333,15 +333,15 @@ rumination = Action("Rumination")
 
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
-comfortZone = Action("Comfort Zone", cpCost=58, aType='countdown', activeTurns=10)
+comfortZone = Action("Comfort Zone", cpCost=66, aType='countdown', activeTurns=10)
 steadyHand = Action("Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
 steadyHand2 = Action("Steady Hand II", cpCost=25, aType='countdown', activeTurns=5)
 wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
 wasteNot2 = Action("Waste Not II", cpCost=98, aType='countdown', activeTurns=8)
 innovation = Action("Innovation", cpCost=18, aType='countdown', activeTurns=3)
 greatStrides = Action("Great Strides", cpCost=32, aType='countdown', activeTurns=3)
-ingenuity = Action("Ingenuity", cpCost=42, aType="countdown", activeTurns=5)
-ingenuity2 = Action("Ingenuity II", cpCost=85, aType="countdown", activeTurns=5)
+ingenuity = Action("Ingenuity", cpCost=24, aType="countdown", activeTurns=5)
+ingenuity2 = Action("Ingenuity II", cpCost=32, aType="countdown", activeTurns=5)
 
 myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand, wasteNot]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
@@ -419,19 +419,22 @@ def mainSim():
     myRecipe = Recipe(10,45,60,0,629)
     mySynth = Synth(me, myRecipe)
 
-    test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
-             steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
+    # Test cases
+    #test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
+    #         steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
+    #
+    #test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
+    #         steadyHand, wasteNot, byregotsBlessing, basicSynth]
+    #
+    #test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, byregotsBlessing, innerQuiet,
+    #         steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
+    #
+    #test = [innerQuiet, steadyHand, wasteNot2, wasteNot, advancedTouch, advancedTouch, advancedTouch, advancedTouch,
+    #        advancedTouch, advancedTouch, advancedTouch, advancedTouch, basicSynth]
+    #
+    #test = [innerQuiet, steadyHand2, wasteNot2, basicTouch, basicTouch, basicTouch, basicTouch, steadyHand2, greatStrides, byregotsBlessing, standardSynthesis]
 
-    test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
-             steadyHand, wasteNot, byregotsBlessing, basicSynth]
-
-    test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, byregotsBlessing, innerQuiet,
-             steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
-
-    test = [innerQuiet, steadyHand, wasteNot2, wasteNot, advancedTouch, advancedTouch, advancedTouch, advancedTouch,
-            advancedTouch, advancedTouch, advancedTouch, advancedTouch, basicSynth]
-
-    test = [innerQuiet, steadyHand, basicTouch, standardTouch, advancedTouch, hastyTouch, byregotsBlessing, mastersMend, mastersMend2, standardSynthesis]
+    test = [innerQuiet, steadyHand2, ingenuity2, ingenuity, basicTouch, basicTouch, basicTouch, basicTouch, standardSynthesis]
 
     simSynth(test, mySynth, False, True)
 
