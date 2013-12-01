@@ -114,7 +114,7 @@ class State:
         self.durabilityOk = durabilityOk
 
 # Simulation Function
-def simSynth(individual, synth, verbose=True):
+def simSynth(individual, synth, verbose=True, debug=False):
     # State tracking
     durabilityState = synth.recipe.durability
     cpState = synth.crafter.craftPoints
@@ -132,6 +132,10 @@ def simSynth(individual, synth, verbose=True):
     if verbose:
         print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "QUA", "PRG", "WAC"))
         print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
+
+    if debug:
+        print("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "QUA", "PRG", "WAC", "IQ", "CTL", "QINC"))
+        print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
 
     for action in individual:
         # Occur regardless of dummy actions
@@ -159,6 +163,7 @@ def simSynth(individual, synth, verbose=True):
             successProbability = action.successProbability + 0.2
         else:
             successProbability = action.successProbability
+        successProbability = min(successProbability, 1)
 
         qualityIncreaseMultiplier = action.qualityIncreaseMultiplier
         if greatStrides.name in effects.countDowns:
@@ -248,6 +253,12 @@ def simSynth(individual, synth, verbose=True):
         if verbose:
             print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
+        if debug:
+            iqCnt = 0
+            if innerQuiet.name in effects.countUps:
+                iqCnt = effects.countUps[innerQuiet.name]
+            print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain))
+
     # Penalise failure outcomes
     if progressState >= synth.recipe.difficulty:
         progressOk = True
@@ -261,6 +272,9 @@ def simSynth(individual, synth, verbose=True):
     finalState = State(stepCount,individual[-1].name,durabilityState,cpState,qualityState,progressState,wastedActions,progressOk,cpOk,durabilityOk)
 
     if verbose:
+        print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
+
+    if debug:
         print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
 
     return finalState
@@ -403,12 +417,16 @@ def mainSim():
     myRecipe = Recipe(10,45,60,0,629)
     mySynth = Synth(me, myRecipe)
 
-    test1 = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
+    test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
              steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
 
-    test2 = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
+    test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
              steadyHand, wasteNot, byregotsBlessing, basicSynth]
-    simSynth(test2, mySynth)
+
+    test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, byregotsBlessing, innerQuiet,
+             steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
+
+    simSynth(test, mySynth, False, True)
 
 if __name__ == "__main__":
     mainSim()
