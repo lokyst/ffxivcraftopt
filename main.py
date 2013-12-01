@@ -140,11 +140,13 @@ def simSynth(individual, synth, verbose=True):
         # Occur regardless of dummy actions
         #==================================
         stepCount += 1
+        control = synth.crafter.control
 
         if innerQuiet.name in effects.countUps:
-            control = (1 + 0.2  * effects.countUps[innerQuiet.name]) * synth.crafter.control
-        else:
-            control = synth.crafter.control
+            control = (1 + 0.2  * effects.countUps[innerQuiet.name]) * control
+
+        if innovation.name in effects.countDowns:
+            control = 1.5 * control
 
         if steadyHand2.name in effects.countDowns:
             successProbability = action.successProbability + 0.3        # What is effect of having both active? Assume 2 always overrides 1 but does not overwrite
@@ -268,7 +270,6 @@ mySynth = Synth(me, myRecipe)
 #Great Strides
 #Observe
 #Reclaim
-#Innovation
 
 dummyAction = Action("______________")
 
@@ -296,6 +297,7 @@ steadyHand = Action("Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
 steadyHand2 = Action("Steady Hand II", cpCost=25, aType='countdown', activeTurns=5)
 wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
 wasteNot2 = Action("Waste Not II", cpCost=95, aType='countdown', activeTurns=8)
+innovation = Action("Innovation", cpCost=18, aType='countdown', activeTurns=3)
 
 myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand, wasteNot]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
