@@ -321,7 +321,7 @@ pieceByPiece = Action("Piece By Piece", durabilityCost=10, cpCost=15, successPro
 
 basicTouch = Action("Basic Touch", durabilityCost=10, cpCost=18, successProbability=0.7, qualityIncreaseMultiplier=1)
 standardTouch = Action("Standard Touch", durabilityCost=10, cpCost=32, successProbability=0.8, qualityIncreaseMultiplier=1.25)
-advancedTouch = Action("Advanced Touch", durabilityCost=10, cpCost=52, successProbability=0.9, qualityIncreaseMultiplier=1.5)
+advancedTouch = Action("Advanced Touch", durabilityCost=10, cpCost=48, successProbability=0.9, qualityIncreaseMultiplier=1.5)
 hastyTouch = Action("Hasty Touch", durabilityCost=10, cpCost=0, successProbability=0.5, qualityIncreaseMultiplier=1)
 
 mastersMend = Action("Master's Mend", cpCost=92)
@@ -335,7 +335,7 @@ comfortZone = Action("Comfort Zone", cpCost=58, aType='countdown', activeTurns=1
 steadyHand = Action("Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
 steadyHand2 = Action("Steady Hand II", cpCost=25, aType='countdown', activeTurns=5)
 wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
-wasteNot2 = Action("Waste Not II", cpCost=95, aType='countdown', activeTurns=8)
+wasteNot2 = Action("Waste Not II", cpCost=98, aType='countdown', activeTurns=8)
 innovation = Action("Innovation", cpCost=18, aType='countdown', activeTurns=3)
 greatStrides = Action("Great Strides", cpCost=32, aType='countdown', activeTurns=3)
 ingenuity = Action("Ingenuity", cpCost=42, aType="countdown", activeTurns=5)
@@ -425,6 +425,9 @@ def mainSim():
 
     test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, byregotsBlessing, innerQuiet,
              steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
+
+    test = [innerQuiet, steadyHand, wasteNot2, wasteNot, advancedTouch, advancedTouch, advancedTouch, advancedTouch,
+            advancedTouch, advancedTouch, advancedTouch, advancedTouch, basicSynth]
 
     simSynth(test, mySynth, False, True)
 
