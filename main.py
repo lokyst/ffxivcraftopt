@@ -191,6 +191,9 @@ def simSynth(individual, synth, verbose=True):
             if manipulation.name in effects.countDowns and durabilityState > 0:
                 durabilityState += 10
 
+            if comfortZone.name in effects.countDowns and cpState > 0:
+                cpState += 8
+
             # Decrement countdowns
             for countDown in list(effects.countDowns.keys()):
                 effects.countDowns[countDown] -= 1
@@ -259,7 +262,6 @@ mySynth = Synth(me, myRecipe)
 # Actions
 #Tricks of the Trade
 #Rumination
-#Comfort Zone
 #Byregot's Blessing
 #Ingenuity
 #Ingenuity II
@@ -289,6 +291,7 @@ mastersMend2 = Action("Master's Mend II", cpCost=150)
 
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
+comfortZone = Action("Comfort Zone", cpCost=58, aType='countdown', activeTurns=10)
 steadyHand = Action("Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
 steadyHand2 = Action("Steady Hand II", cpCost=25, aType='countdown', activeTurns=5)
 wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
