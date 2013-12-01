@@ -148,7 +148,9 @@ def simSynth(individual, synth, verbose=True):
             control *= 1.5
 
         levelDifference = synth.crafter.level - synth.recipe.level
-        if ingenuity.name in effects.countDowns:
+        if ingenuity2.name in effects.countDowns:
+            levelDifference = 3
+        elif ingenuity.name in effects.countDowns:
             levelDifference = 0
 
         if steadyHand2.name in effects.countDowns:
@@ -283,8 +285,6 @@ mySynth = Synth(me, myRecipe)
 
 # Actions
 #Tricks of the Trade
-#Ingenuity
-#Ingenuity II
 #Reclaim
 
 dummyAction = Action("______________")
@@ -319,6 +319,7 @@ wasteNot2 = Action("Waste Not II", cpCost=95, aType='countdown', activeTurns=8)
 innovation = Action("Innovation", cpCost=18, aType='countdown', activeTurns=3)
 greatStrides = Action("Great Strides", cpCost=32, aType='countdown', activeTurns=3)
 ingenuity = Action("Ingenuity", cpCost=42, aType="countdown", activeTurns=5)
+ingenuity2 = Action("Ingenuity II", cpCost=85, aType="countdown", activeTurns=5)
 
 myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand, wasteNot]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
