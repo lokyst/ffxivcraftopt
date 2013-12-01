@@ -152,6 +152,11 @@ def simSynth(individual, synth, verbose=True):
         else:
             successProbability = action.successProbability
 
+        if wasteNot.name in effects.countDowns:
+            durabilityCost = 0.5 * action.durabilityCost
+        else:
+            durabilityCost = action.durabilityCost
+
         # Occur if a dummy action
         #==================================
         if (progressState >= synth.recipe.difficulty or durabilityState <= 0) and action.name != dummyAction.name:
@@ -163,13 +168,18 @@ def simSynth(individual, synth, verbose=True):
             # State tracking
             progressState += action.progressIncreaseMultiplier * successProbability * synth.baseProgressIncrease
             qualityState += action.qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(control)
-            durabilityState -= action.durabilityCost
-            durabilityState = min(durabilityState, synth.recipe.durability)
+            durabilityState -= durabilityCost
             cpState -= action.cpCost
 
             # Effect management
             #==================================
             # Special Effect Actions
+            if action == mastersMend:
+                durabilityState += 30
+
+            if action == mastersMend2:
+                durabilityState += 60
+
             if manipulation.name in effects.countDowns and durabilityState > 0:
                 durabilityState += 10
 
@@ -189,6 +199,10 @@ def simSynth(individual, synth, verbose=True):
 
             if action.type == "countdown":
                 effects.countDowns[action.name] = action.activeTurns
+
+            # Sanity checks for state variables
+            durabilityState = min(durabilityState, synth.recipe.durability)
+            cpState = min(cpState, synth.crafter.craftPoints)
 
         if verbose:
             print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
@@ -250,17 +264,16 @@ standardTouch = Action("Standard Touch", durabilityCost=10, cpCost=32, successPr
 advancedTouch = Action("Advanced Touch", durabilityCost=10, cpCost=52, successProbability=0.9, qualityIncreaseMultiplier=1.5)
 hastyTouch = Action("Hasty Touch", durabilityCost=10, cpCost=0, successProbability=0.5, qualityIncreaseMultiplier=1)
 
-mastersMend = Action("Master's Mend", durabilityCost=-30, cpCost=92)
-mastersMend2 = Action("Master's Mend II", durabilityCost=-60, cpCost=150)
+mastersMend = Action("Master's Mend", cpCost=92)
+mastersMend2 = Action("Master's Mend II", cpCost=150)
 
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
 steadyHand = Action("Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
+wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
 
-myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand]
+myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand, wasteNot]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
-#simSynth(myInitialGuess, mySynth)
-
 
 # Evaluation function
 def evalSeq(individual):
