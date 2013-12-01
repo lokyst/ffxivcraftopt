@@ -19,7 +19,6 @@ from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
-from deap import gp
 
 # ==== Model Stuff
 class Crafter:
@@ -321,7 +320,9 @@ toolbox.register("mutate", tools.mutShuffleIndexes, indpb=0.05)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
 def main():
-    random.seed(64)
+    seed = 64
+    #seed = random.randint(0, 19770216)
+    random.seed(seed)
 
     pop = toolbox.population(n=300)
     pop.pop()
@@ -336,8 +337,8 @@ def main():
     algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=50, stats=stats, halloffame=hof, verbose=True)
 
     best_ind = tools.selBest(pop, 1)[0]
+    print("\nRandom Seed: %i" % seed)
     simSynth(best_ind, mySynth)
-    #simSynth(iniGuess, mySynth)
 
     return pop, stats, hof
 
