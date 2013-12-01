@@ -280,10 +280,10 @@ mySynth = Synth(me, myRecipe)
 #Ingenuity
 #Ingenuity II
 #Great Strides
-#Observe
 #Reclaim
 
 dummyAction = Action("______________")
+observe = Action("Observe", cpCost=14)
 
 basicSynth = Action("Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1)
 standardSynthesis = Action("Standard Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1.5)
