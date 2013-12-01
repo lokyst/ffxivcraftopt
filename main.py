@@ -130,11 +130,11 @@ def simSynth(individual, synth, verbose=True, debug=False):
     durabilityOk = False
 
     if verbose:
-        print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "QUA", "PRG", "WAC"))
+        print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
         print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
 
     if debug:
-        print("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "QUA", "PRG", "WAC", "IQ", "CTL", "QINC"))
+        print("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
         print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
 
     for action in individual:
@@ -170,13 +170,15 @@ def simSynth(individual, synth, verbose=True, debug=False):
             qualityIncreaseMultiplier *= 2
 
         # Calculate final gains / losses
-        progressGain = action.progressIncreaseMultiplier * successProbability * synth.CalculateBaseProgressIncrease(levelDifference, craftsmanship)
+        bProgressGain = action.progressIncreaseMultiplier * synth.CalculateBaseProgressIncrease(levelDifference, craftsmanship)
+        progressGain = successProbability * bProgressGain
         if action == flawlessSynthesis:
             progressGain = 0.9 * 40
         elif action == pieceByPiece:
             progressGain = 0.9 * (synth.recipe.difficulty - progressState)/3
 
-        qualityGain = qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(levelDifference, control)
+        bQualityGain = qualityIncreaseMultiplier * synth.CalculateBaseQualityIncrease(levelDifference, control)
+        qualityGain = successProbability * bQualityGain
         if action == byregotsBlessing:
             qualityGain *= (1 + 0.2 * effects.countUps[innerQuiet.name])
 
@@ -257,7 +259,7 @@ def simSynth(individual, synth, verbose=True, debug=False):
             iqCnt = 0
             if innerQuiet.name in effects.countUps:
                 iqCnt = effects.countUps[innerQuiet.name]
-            print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain))
+            print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
 
     # Penalise failure outcomes
     if progressState >= synth.recipe.difficulty:
@@ -429,8 +431,6 @@ def mainSim():
     test = [innerQuiet, steadyHand, wasteNot2, wasteNot, advancedTouch, advancedTouch, advancedTouch, advancedTouch,
             advancedTouch, advancedTouch, advancedTouch, advancedTouch, basicSynth]
 
-#basicSynth = Action("Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1)
-#standardSynthesis = Action("Standard Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1.5)
 #carefulSynthesis = Action("Careful Synthesis", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=0.9)
 #carefulSynthesis2 = Action("Careful Synthesis II", durabilityCost=10, cpCost=0, successProbability=1, progressIncreaseMultiplier=1.2)
 #brandSynthesis = Action("Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
@@ -438,7 +438,7 @@ def mainSim():
 #flawlessSynthesis = Action("Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
 #pieceByPiece = Action("Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
 
-    test = [innerQuiet, steadyHand, wasteNot, advancedTouch, rumination, basicSynth]
+    test = [innerQuiet, steadyHand, wasteNot, advancedTouch, rumination, observe, observe, standardSynthesis]
 
     simSynth(test, mySynth, False, True)
 
