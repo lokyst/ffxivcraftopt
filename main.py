@@ -37,9 +37,10 @@ class Recipe:
         self.maxQuality = maxQuality
 
 class Synth:
-    def __init__(self, crafter=Crafter(), recipe=Recipe()):
+    def __init__(self, crafter=Crafter(), recipe=Recipe(), maxTrickUses=0):
         self.crafter = crafter
         self.recipe = recipe
+        self.maxTrickUses = maxTrickUses
 
     def CalculateBaseProgressIncrease(self, levelDifference, craftsmanship):
         if -5 <= levelDifference <= 0:
@@ -278,14 +279,14 @@ def simSynth(individual, synth, verbose=True, debug=False):
     if durabilityState >= 0 and progressState >= synth.recipe.difficulty:
         durabilityOk = True
 
-    if trickUses < synth.maxTrickUses:
+    if trickUses <= synth.maxTrickUses:
         trickOk = True
 
     finalState = State(stepCount, individual[-1].name, durabilityState, cpState, qualityState, progressState,
                        wastedActions, progressOk, cpOk, durabilityOk, trickOk)
 
     if verbose:
-        print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
+        print("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     if debug:
         print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
@@ -376,6 +377,9 @@ def evalSeq(individual):
         penalties += 1
 
     if not result.cpOk:
+        penalties += 1
+
+    if not result.trickOk:
         penalties += 1
 
     fitness += result.qualityState
