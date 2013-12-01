@@ -171,9 +171,13 @@ def simSynth(individual, synth, verbose=True):
         else:
             progressGain = action.progressIncreaseMultiplier * successProbability * synth.baseProgressIncrease
 
+        qualityGain = action.qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(control)
+        if action == byregotsBlessing:
+            qualityGain = (1 + 0.2 * effects.countUps[innerQuiet.name]) * qualityGain
+
         # Occur if a dummy action
         #==================================
-        if (progressState >= synth.recipe.difficulty or durabilityState <= 0) and action.name != dummyAction.name:
+        if (progressState >= synth.recipe.difficulty or durabilityState <= 0) and action != dummyAction:
             wastedActions += 1
 
         # Occur if not a dummy action
@@ -181,7 +185,7 @@ def simSynth(individual, synth, verbose=True):
         else:
             # State tracking
             progressState += progressGain
-            qualityState += action.qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(control)
+            qualityState += qualityGain
             durabilityState -= durabilityCost
             cpState -= action.cpCost
 
@@ -302,6 +306,7 @@ hastyTouch = Action("Hasty Touch", durabilityCost=10, cpCost=0, successProbabili
 mastersMend = Action("Master's Mend", cpCost=92)
 mastersMend2 = Action("Master's Mend II", cpCost=150)
 rumination = Action("Rumination")
+byregotsBlessing = Action("Byregot's Blessing", durabilityCost=10, cpCost=24, successProbability=0.9, qualityIncreaseMultiplier=1)
 
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
