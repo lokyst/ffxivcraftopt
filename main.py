@@ -392,5 +392,17 @@ def main():
 
     return pop, stats, hof
 
+def mainSim():
+    me = Crafter(136,137,252,25)
+    myRecipe = Recipe(10,45,60,0,629)
+    mySynth = Synth(me, myRecipe)
+
+    test1 = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
+             steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
+
+    test2 = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
+             steadyHand, wasteNot, byregotsBlessing, basicSynth]
+    simSynth(test2, mySynth)
+
 if __name__ == "__main__":
-    main()
+    mainSim()
