@@ -104,7 +104,7 @@ class EffectTracker:
         self.toggles = {}
 
 class State:
-    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False):
+    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False, iqOk=False):
         self.step = step
         self.action = action
         self.durabilityState = durabilityState
@@ -115,6 +115,7 @@ class State:
         self.progressOk = progressOk
         self.cpOk = cpOk
         self.durabilityOk = durabilityOk
+        self.iqOk = iqOk
 
 # Simulation Function
 def simSynth(individual, synth, verbose=True):
@@ -125,12 +126,15 @@ def simSynth(individual, synth, verbose=True):
     qualityState = synth.recipe.startQuality
     stepCount = 0
     wastedActions = 0
+    innerQuietUses = 0
+    ruminationUses = 0
     effects = EffectTracker()
 
     # End state checks
     progressOk = False
     cpOk = False
     durabilityOk = False
+    iqOk = False
 
     if verbose:
         print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "QUA", "PRG", "WAC"))
@@ -196,6 +200,12 @@ def simSynth(individual, synth, verbose=True):
             if comfortZone.name in effects.countDowns and cpState > 0:
                 cpState += 8
 
+            if action == innerQuiet:
+                innerQuietUses += 1
+
+            if action == rumination:
+                ruminationUses += 1
+
             # Decrement countdowns
             for countDown in list(effects.countDowns.keys()):
                 effects.countDowns[countDown] -= 1
@@ -230,7 +240,10 @@ def simSynth(individual, synth, verbose=True):
     if durabilityState >= 0 and progressState >= synth.recipe.difficulty:
         durabilityOk = True
 
-    finalState = State(stepCount,individual[-1].name,durabilityState,cpState,qualityState,progressState,wastedActions,progressOk,cpOk,durabilityOk)
+    if innerQuietUses >= ruminationUses:
+        iqOk = True
+
+    finalState = State(stepCount,individual[-1].name,durabilityState,cpState,qualityState,progressState,wastedActions,progressOk,cpOk,durabilityOk,iqOk)
 
     if verbose:
         print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
@@ -263,7 +276,6 @@ mySynth = Synth(me, myRecipe)
 
 # Actions
 #Tricks of the Trade
-#Rumination
 #Byregot's Blessing
 #Ingenuity
 #Ingenuity II
@@ -289,6 +301,7 @@ hastyTouch = Action("Hasty Touch", durabilityCost=10, cpCost=0, successProbabili
 
 mastersMend = Action("Master's Mend", cpCost=92)
 mastersMend2 = Action("Master's Mend II", cpCost=150)
+rumination = Action("Rumination")
 
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
@@ -318,6 +331,9 @@ def evalSeq(individual):
         penalties += 1
 
     if not result.cpOk:
+        penalties += 1
+
+    if not result.iqOk:
         penalties += 1
 
     fitness += result.qualityState
