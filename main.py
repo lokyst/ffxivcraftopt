@@ -147,6 +147,11 @@ def simSynth(individual, synth, verbose=True):
         else:
             control = synth.crafter.control
 
+        if steadyHand.name in effects.countDowns:
+            successProbability = action.successProbability + 0.2
+        else:
+            successProbability = action.successProbability
+
         # Occur if a dummy action
         #==================================
         if (progressState >= synth.recipe.difficulty or durabilityState <= 0) and action.name != dummyAction.name:
@@ -156,8 +161,8 @@ def simSynth(individual, synth, verbose=True):
         #==================================
         else:
             # State tracking
-            progressState += action.progressIncreaseMultiplier * action.successProbability * synth.baseProgressIncrease
-            qualityState += action.qualityIncreaseMultiplier * action.successProbability * synth.CalculateBaseQualityIncrease(control)
+            progressState += action.progressIncreaseMultiplier * successProbability * synth.baseProgressIncrease
+            qualityState += action.qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(control)
             durabilityState -= action.durabilityCost
             durabilityState = min(durabilityState, synth.recipe.durability)
             cpState -= action.cpCost
@@ -176,7 +181,7 @@ def simSynth(individual, synth, verbose=True):
 
             # Increment countups
             if action.qualityIncreaseMultiplier > 0 and innerQuiet.name in effects.countUps:
-                effects.countUps[innerQuiet.name] += 1
+                effects.countUps[innerQuiet.name] += 1 * successProbability
 
             # Initialize new effects after countdowns are managed to reset them properly
             if action.type == "countup":
@@ -184,7 +189,6 @@ def simSynth(individual, synth, verbose=True):
 
             if action.type == "countdown":
                 effects.countDowns[action.name] = action.activeTurns
-
 
         if verbose:
             print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
@@ -251,8 +255,9 @@ mastersMend2 = Action("Master's Mend II", durabilityCost=-60, cpCost=150)
 
 innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
 manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
+steadyHand = Action("Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
 
-myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation]
+myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
 #simSynth(myInitialGuess, mySynth)
 
