@@ -215,7 +215,7 @@ def simSynth(individual, synth, verbose=True, debug=False):
 
             if action == rumination:
                 if innerQuiet.name in effects.countUps:
-                    cpState += (21 * effects.countUps[innerQuiet.name] - effects.countUps[innerQuiet.name]^2 + 10)/2
+                    cpState += (21 * effects.countUps[innerQuiet.name] - effects.countUps[innerQuiet.name]**2 + 10)/2
                     del effects.countUps[innerQuiet.name]
                 else:
                     wastedActions += 1
@@ -428,6 +428,17 @@ def mainSim():
 
     test = [innerQuiet, steadyHand, wasteNot2, wasteNot, advancedTouch, advancedTouch, advancedTouch, advancedTouch,
             advancedTouch, advancedTouch, advancedTouch, advancedTouch, basicSynth]
+
+#basicSynth = Action("Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1)
+#standardSynthesis = Action("Standard Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1.5)
+#carefulSynthesis = Action("Careful Synthesis", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=0.9)
+#carefulSynthesis2 = Action("Careful Synthesis II", durabilityCost=10, cpCost=0, successProbability=1, progressIncreaseMultiplier=1.2)
+#brandSynthesis = Action("Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
+#rapidSynthesis = Action("Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5)
+#flawlessSynthesis = Action("Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
+#pieceByPiece = Action("Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
+
+    test = [innerQuiet, steadyHand, wasteNot, advancedTouch, rumination, basicSynth]
 
     simSynth(test, mySynth, False, True)
 
