@@ -104,7 +104,7 @@ class EffectTracker:
         self.toggles = {}
 
 class State:
-    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False, iqOk=False):
+    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False):
         self.step = step
         self.action = action
         self.durabilityState = durabilityState
@@ -115,7 +115,6 @@ class State:
         self.progressOk = progressOk
         self.cpOk = cpOk
         self.durabilityOk = durabilityOk
-        self.iqOk = iqOk
 
 # Simulation Function
 def simSynth(individual, synth, verbose=True):
@@ -126,15 +125,12 @@ def simSynth(individual, synth, verbose=True):
     qualityState = synth.recipe.startQuality
     stepCount = 0
     wastedActions = 0
-    innerQuietUses = 0
-    ruminationUses = 0
     effects = EffectTracker()
 
     # End state checks
     progressOk = False
     cpOk = False
     durabilityOk = False
-    iqOk = False
 
     if verbose:
         print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "QUA", "PRG", "WAC"))
@@ -147,10 +143,10 @@ def simSynth(individual, synth, verbose=True):
         control = synth.crafter.control
 
         if innerQuiet.name in effects.countUps:
-            control = (1 + 0.2  * effects.countUps[innerQuiet.name]) * control
+            control *= (1 + 0.2 * effects.countUps[innerQuiet.name])
 
         if innovation.name in effects.countDowns:
-            control = 1.5 * control
+            control *= 1.5
 
         if steadyHand2.name in effects.countDowns:
             successProbability = action.successProbability + 0.3        # What is effect of having both active? Assume 2 always overrides 1 but does not overwrite
@@ -164,6 +160,10 @@ def simSynth(individual, synth, verbose=True):
         else:
             durabilityCost = action.durabilityCost
 
+        qualityIncreaseMultiplier = action.qualityIncreaseMultiplier
+        if greatStrides.name in effects.countDowns:
+            qualityIncreaseMultiplier *= 2
+
         if action == flawlessSynthesis:
             progressGain = 0.9 * 40
         elif action == pieceByPiece:
@@ -171,9 +171,9 @@ def simSynth(individual, synth, verbose=True):
         else:
             progressGain = action.progressIncreaseMultiplier * successProbability * synth.baseProgressIncrease
 
-        qualityGain = action.qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(control)
+        qualityGain = qualityIncreaseMultiplier * successProbability * synth.CalculateBaseQualityIncrease(control)
         if action == byregotsBlessing:
-            qualityGain = (1 + 0.2 * effects.countUps[innerQuiet.name]) * qualityGain
+            qualityGain *= (1 + 0.2 * effects.countUps[innerQuiet.name])
 
         # Occur if a dummy action
         #==================================
@@ -204,11 +204,15 @@ def simSynth(individual, synth, verbose=True):
             if comfortZone.name in effects.countDowns and cpState > 0:
                 cpState += 8
 
-            if action == innerQuiet:
-                innerQuietUses += 1
-
             if action == rumination:
-                ruminationUses += 1
+                if innerQuiet.name in effects.countUps:
+                    cpState += (21 * effects.countUps[innerQuiet.name] - effects.countUps[innerQuiet.name]^2 + 10)/2
+                    del effects.countUps[innerQuiet.name]
+                else:
+                    wastedActions += 1
+
+            if action.qualityIncreaseMultiplier > 0 and greatStrides.name in effects.countDowns:
+                del effects.countDowns[greatStrides.name]
 
             # Decrement countdowns
             for countDown in list(effects.countDowns.keys()):
@@ -244,10 +248,7 @@ def simSynth(individual, synth, verbose=True):
     if durabilityState >= 0 and progressState >= synth.recipe.difficulty:
         durabilityOk = True
 
-    if innerQuietUses >= ruminationUses:
-        iqOk = True
-
-    finalState = State(stepCount,individual[-1].name,durabilityState,cpState,qualityState,progressState,wastedActions,progressOk,cpOk,durabilityOk,iqOk)
+    finalState = State(stepCount,individual[-1].name,durabilityState,cpState,qualityState,progressState,wastedActions,progressOk,cpOk,durabilityOk)
 
     if verbose:
         print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
@@ -280,10 +281,8 @@ mySynth = Synth(me, myRecipe)
 
 # Actions
 #Tricks of the Trade
-#Byregot's Blessing
 #Ingenuity
 #Ingenuity II
-#Great Strides
 #Reclaim
 
 dummyAction = Action("______________")
@@ -316,6 +315,7 @@ steadyHand2 = Action("Steady Hand II", cpCost=25, aType='countdown', activeTurns
 wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
 wasteNot2 = Action("Waste Not II", cpCost=95, aType='countdown', activeTurns=8)
 innovation = Action("Innovation", cpCost=18, aType='countdown', activeTurns=3)
+greatStrides = Action("Great Strides", cpCost=32, aType='countdown', activeTurns=3)
 
 myActions = [dummyAction, basicSynth, basicTouch, mastersMend, hastyTouch, standardTouch, carefulSynthesis, innerQuiet, manipulation, steadyHand, wasteNot]
 myInitialGuess = generateInitialGuess(mySynth, SEQLENGTH)
@@ -336,9 +336,6 @@ def evalSeq(individual):
         penalties += 1
 
     if not result.cpOk:
-        penalties += 1
-
-    if not result.iqOk:
         penalties += 1
 
     fitness += result.qualityState
