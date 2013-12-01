@@ -171,11 +171,11 @@ def simSynth(individual, synth, verbose=True, debug=False):
 
         # Calculate final gains / losses
         bProgressGain = action.progressIncreaseMultiplier * synth.CalculateBaseProgressIncrease(levelDifference, craftsmanship)
-        progressGain = successProbability * bProgressGain
         if action == flawlessSynthesis:
-            progressGain = 0.9 * 40
+            bProgressGain = 40
         elif action == pieceByPiece:
-            progressGain = 0.9 * (synth.recipe.difficulty - progressState)/3
+            bProgressGain = (synth.recipe.difficulty - progressState)/3
+        progressGain = successProbability * bProgressGain
 
         bQualityGain = qualityIncreaseMultiplier * synth.CalculateBaseQualityIncrease(levelDifference, control)
         qualityGain = successProbability * bQualityGain
@@ -315,7 +315,7 @@ observe = Action("Observe", cpCost=14)
 basicSynth = Action("Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1)
 standardSynthesis = Action("Standard Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1.5)
 carefulSynthesis = Action("Careful Synthesis", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=0.9)
-carefulSynthesis2 = Action("Careful Synthesis II", durabilityCost=10, cpCost=0, successProbability=1, progressIncreaseMultiplier=1.2)
+carefulSynthesis2 = Action("Careful Synthesis II", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=1.2)
 brandSynthesis = Action("Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
 rapidSynthesis = Action("Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5)
 flawlessSynthesis = Action("Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
@@ -431,14 +431,11 @@ def mainSim():
     test = [innerQuiet, steadyHand, wasteNot2, wasteNot, advancedTouch, advancedTouch, advancedTouch, advancedTouch,
             advancedTouch, advancedTouch, advancedTouch, advancedTouch, basicSynth]
 
-#carefulSynthesis = Action("Careful Synthesis", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=0.9)
-#carefulSynthesis2 = Action("Careful Synthesis II", durabilityCost=10, cpCost=0, successProbability=1, progressIncreaseMultiplier=1.2)
 #brandSynthesis = Action("Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
 #rapidSynthesis = Action("Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5)
-#flawlessSynthesis = Action("Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
 #pieceByPiece = Action("Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
 
-    test = [innerQuiet, steadyHand, wasteNot, carefulSynthesis, rumination, observe, observe, standardSynthesis]
+    test = [innerQuiet, wasteNot, flawlessSynthesis, observe, observe, standardSynthesis]
 
     simSynth(test, mySynth, False, True)
 
