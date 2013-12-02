@@ -14,11 +14,24 @@
 #    License along with DEAP. If not, see <http://www.gnu.org/licenses/>.
 
 import random, math
+from functools import partial
 
 from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
+from deap import gp
+
+# ==== GP AST functions
+def progn(*args):
+    for arg in args:
+        arg()
+
+def prog2(out1, out2):
+    return partial(progn,out1,out2)
+
+def flatten_prog(prog):
+    return [x.value for x in prog if isinstance(x, gp.Terminal)]
 
 # ==== Model Stuff
 class Crafter:
@@ -468,12 +481,91 @@ def mainSim(mySynth):
 
     simSynth(test, mySynth, False, True)
 
+def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
+    if seed is None:
+        seed = random.randint(0, 19770216)
+    random.seed(seed)
+
+    myActions.pop(0)    # drop the dummy action
+
+    pset = gp.PrimitiveSet("MAIN", 0)
+    pset.addPrimitive(prog2, 2)
+    for action in myActions:
+        pset.addTerminal(action)
+
+    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax, pset=pset)
+
+    toolbox = base.Toolbox()
+
+    # Attribute generator
+    toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)
+
+    # Structure initializers
+    toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    def evalSim(individual):
+        # Transform the AST into a sequence of Actions
+        individual = flatten_prog(individual)
+
+        # Simulate synth
+        result = simSynth(individual, mySynth, False)
+        penalties = 0
+        fitness = 0
+
+        # Sum the constraint violations
+        penalties += result.wastedActions
+
+        if not result.durabilityOk:
+           penalties += 1
+
+        if not result.progressOk:
+            penalties += 1
+
+        if not result.cpOk:
+            penalties += 1
+
+        if not result.trickOk:
+            penalties += 1
+
+        fitness += result.qualityState
+        fitness -= penaltyWeight * penalties
+
+        return fitness,
+
+    toolbox.register("evaluate", evalSim)
+    toolbox.register("select", tools.selTournament, tournsize=7)
+    toolbox.register("mate", gp.cxOnePoint)
+    toolbox.register("expr_mut", gp.genRamped, min_=0, max_=2)
+    toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut)
+
+    pop = toolbox.population(n=300)
+    hof = tools.HallOfFame(1)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", tools.mean)
+    stats.register("std", tools.std)
+    stats.register("min", min)
+    stats.register("max", max)
+
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 100, stats, halloffame=hof)
+
+    # Print Best Individual
+    #==============================
+    best_ind = flatten_prog(tools.selBest(pop, 1)[0])
+    print("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
+    simSynth(best_ind, mySynth)
+
+    return pop, hof, stats
+
+
 def mainRecipeWrapper():
     # Recipe Stuff
     #==============================
     # Synth details
     penaltyWeight = 10000
     seqLength = 20
+    seed = 64
     myCrafter = Crafter(136,137,252,25)
     #myRecipe = Recipe(10,45,60,0,629)
     myRecipe = Recipe(26,45,40,0,1332)
@@ -482,7 +574,7 @@ def mainRecipeWrapper():
                  rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
 
     # Call to GA
-    mainGA(mySynth, myActions, penaltyWeight, seqLength)
+    mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)
 
 if __name__ == "__main__":
     mainRecipeWrapper()
