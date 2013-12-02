@@ -1,17 +1,11 @@
-#    This file is part of DEAP.
+# This file is part of the FFXIV CraftOptimizer
+# by Rhoda Baker (rhoda.baker@gmail.com)
 #
-#    DEAP is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Lesser General Public License as
-#    published by the Free Software Foundation, either version 3 of
-#    the License, or (at your option) any later version.
-#
-#    DEAP is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-#    GNU Lesser General Public License for more details.
-#
-#    You should have received a copy of the GNU Lesser General Public
-#    License along with DEAP. If not, see <http://www.gnu.org/licenses/>.
+# TODO
+# Monte-Carlo
+# Initial guess for GP method
+# Macro output
+# UI
 
 import random, math
 from functools import partial
@@ -129,7 +123,7 @@ class State:
         self.durabilityOk = durabilityOk
         self.trickOk = trickOk
 
-# Simulation Function
+# Probabalistic Simulation Function
 def simSynth(individual, synth, verbose=True, debug=False):
     # State tracking
     durabilityState = synth.recipe.durability
@@ -482,35 +476,39 @@ def mainSim(mySynth):
     simSynth(test, mySynth, False, True)
 
 def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
+    # Do this be able to print the seed used
     if seed is None:
         seed = random.randint(0, 19770216)
     random.seed(seed)
 
-    myActions.pop(0)    # drop the dummy action
-
+    # Create the set of primitives and terminals to set up the AST
     pset = gp.PrimitiveSet("MAIN", 0)
     pset.addPrimitive(prog2, 2)
     for action in myActions:
         pset.addTerminal(action)
 
+    # Set up a maximization problem
     creator.create("FitnessMax", base.Fitness, weights=(1.0,))
     creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax, pset=pset)
 
     toolbox = base.Toolbox()
 
-    # Attribute generator
+    # Tell the GP to pull from the set of primitives when selecting genes
     toolbox.register("expr_init", gp.genFull, pset=pset, min_=1, max_=2)
 
     # Structure initializers
     toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.expr_init)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
+    # Create the evaluation function
     def evalSim(individual):
         # Transform the AST into a sequence of Actions
         individual = flatten_prog(individual)
 
         # Simulate synth
         result = simSynth(individual, mySynth, False)
+
+        # Initialize tracking variables
         penalties = 0
         fitness = 0
 
@@ -534,6 +532,7 @@ def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
 
         return fitness,
 
+    # more GP setup
     toolbox.register("evaluate", evalSim)
     toolbox.register("select", tools.selTournament, tournsize=7)
     toolbox.register("mate", gp.cxOnePoint)
@@ -548,7 +547,7 @@ def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
     stats.register("min", min)
     stats.register("max", max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 100, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 200, stats, halloffame=hof)
 
     # Print Best Individual
     #==============================
@@ -573,7 +572,10 @@ def mainRecipeWrapper():
     myActions = [dummyAction, basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade,
                  rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
 
-    # Call to GA
+    # Drop the dummy action when using GP
+    myActions.pop(0)
+
+    # Call to GP
     mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)
 
 if __name__ == "__main__":
