@@ -4,7 +4,7 @@
 # TODO
 # Monte-Carlo
 # Initial guess for GP method
-# Macro output
+# HQ function
 # UI
 
 import random, math
@@ -26,6 +26,22 @@ def prog2(out1, out2):
 
 def flatten_prog(prog):
     return [x.value for x in prog if isinstance(x, gp.Terminal)]
+
+# ==== Macro Stuff
+def CreateMacro(actionList, waitTime=3):
+    macroList = [x.name for x in actionList if x != dummyAction]        # Strip dummy actions
+
+    waitString = "/wait %i\n" % (waitTime,)
+    count = 0
+    macroString = ""
+    for action in macroList:
+        count += 1
+        if count % 8 == 0:
+            macroString += "\n=====================================\n\n"
+        macroString += "/ac \"" + action + "\" <me>\n"
+        macroString += waitString
+
+    return macroString
 
 # ==== Model Stuff
 class Crafter:
