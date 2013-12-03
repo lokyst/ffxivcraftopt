@@ -96,7 +96,8 @@ class Synth:
         return round(levelCorrectedQuality, 0)
 
 class Action:
-    def __init__(self, name, durabilityCost=0, cpCost=0, successProbability=1.0, qualityIncreaseMultiplier=0.0, progressIncreaseMultiplier=0.0, aType='immediate', activeTurns=1):
+    def __init__(self, shortName, name, durabilityCost=0, cpCost=0, successProbability=1.0, qualityIncreaseMultiplier=0.0, progressIncreaseMultiplier=0.0, aType='immediate', activeTurns=1):
+        self.shortName = shortName
         self.name = name
         self.durabilityCost = durabilityCost
         self.cpCost = cpCost
@@ -118,6 +119,12 @@ class Action:
             return True
         else:
             return False
+
+    def __repr__(self):
+        return self.shortName
+
+    def __str__(self):
+        return self.shortName
 
 class EffectTracker:
     def __init__(self):
@@ -358,40 +365,40 @@ def generateInitialGuess(synth, seqLength):
 
 # Define Actions
 #======================================
-dummyAction = Action("______________")
-observe = Action("Observe", cpCost=14)
+dummyAction = Action("dummyAction", "______________")
+observe = Action("observe", "Observe", cpCost=14)
 
-basicSynth = Action("Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1)
-standardSynthesis = Action("Standard Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1.5)
-carefulSynthesis = Action("Careful Synthesis", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=0.9)
-carefulSynthesis2 = Action("Careful Synthesis II", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=1.2)
-brandSynthesis = Action("Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
-rapidSynthesis = Action("Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5)
-flawlessSynthesis = Action("Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
-pieceByPiece = Action("Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
+basicSynth = Action("basicSynth", "Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1)
+standardSynthesis = Action("standardSynthesis", "Standard Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1.5)
+carefulSynthesis = Action("carefulSynthesis", "Careful Synthesis", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=0.9)
+carefulSynthesis2 = Action("carefulSynthesis2", "Careful Synthesis II", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=1.2)
+brandSynthesis = Action("brandSynthesis", "Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
+rapidSynthesis = Action("rapidSynthesis", "Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5)
+flawlessSynthesis = Action("flawlessSynthesis", "Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
+pieceByPiece = Action("pieceByPiece", "Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
 
-basicTouch = Action("Basic Touch", durabilityCost=10, cpCost=18, successProbability=0.7, qualityIncreaseMultiplier=1)
-standardTouch = Action("Standard Touch", durabilityCost=10, cpCost=32, successProbability=0.8, qualityIncreaseMultiplier=1.25)
-advancedTouch = Action("Advanced Touch", durabilityCost=10, cpCost=48, successProbability=0.9, qualityIncreaseMultiplier=1.5)
-hastyTouch = Action("Hasty Touch", durabilityCost=10, cpCost=0, successProbability=0.5, qualityIncreaseMultiplier=1)
-byregotsBlessing = Action("Byregot's Blessing", durabilityCost=10, cpCost=24, successProbability=0.9, qualityIncreaseMultiplier=1)
+basicTouch = Action("basicTouch", "Basic Touch", durabilityCost=10, cpCost=18, successProbability=0.7, qualityIncreaseMultiplier=1)
+standardTouch = Action("standardTouch", "Standard Touch", durabilityCost=10, cpCost=32, successProbability=0.8, qualityIncreaseMultiplier=1.25)
+advancedTouch = Action("advancedTouch", "Advanced Touch", durabilityCost=10, cpCost=48, successProbability=0.9, qualityIncreaseMultiplier=1.5)
+hastyTouch = Action("hastyTouch", "Hasty Touch", durabilityCost=10, cpCost=0, successProbability=0.5, qualityIncreaseMultiplier=1)
+byregotsBlessing = Action("byregotsBlessing", "Byregot's Blessing", durabilityCost=10, cpCost=24, successProbability=0.9, qualityIncreaseMultiplier=1)
 
-mastersMend = Action("Master's Mend", cpCost=92)
-mastersMend2 = Action("Master's Mend II", cpCost=160)
-rumination = Action("Rumination")
-tricksOfTheTrade = Action("Tricks Of The Trade")
+mastersMend = Action("mastersMend", "Master's Mend", cpCost=92)
+mastersMend2 = Action("mastersMend2", "Master's Mend II", cpCost=160)
+rumination = Action("rumination", "Rumination")
+tricksOfTheTrade = Action("tricksOfTheTrade", "Tricks Of The Trade")
 
-innerQuiet = Action("Inner Quiet", cpCost=18, aType="countup")
-manipulation = Action("Manipulation", cpCost=88, aType='countdown', activeTurns=3)
-comfortZone = Action("Comfort Zone", cpCost=66, aType='countdown', activeTurns=10)
-steadyHand = Action("Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
-steadyHand2 = Action("Steady Hand II", cpCost=25, aType='countdown', activeTurns=5)
-wasteNot = Action("Waste Not", cpCost=56, aType='countdown', activeTurns=4)
-wasteNot2 = Action("Waste Not II", cpCost=98, aType='countdown', activeTurns=8)
-innovation = Action("Innovation", cpCost=18, aType='countdown', activeTurns=3)
-greatStrides = Action("Great Strides", cpCost=32, aType='countdown', activeTurns=3)
-ingenuity = Action("Ingenuity", cpCost=24, aType="countdown", activeTurns=5)
-ingenuity2 = Action("Ingenuity II", cpCost=32, aType="countdown", activeTurns=5)
+innerQuiet = Action("innerQuiet", "Inner Quiet", cpCost=18, aType="countup")
+manipulation = Action("manipulation", "Manipulation", cpCost=88, aType='countdown', activeTurns=3)
+comfortZone = Action("comfortZone", "Comfort Zone", cpCost=66, aType='countdown', activeTurns=10)
+steadyHand = Action("steadyHand", "Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
+steadyHand2 = Action("steadyHand2", "Steady Hand II", cpCost=25, aType='countdown', activeTurns=5)
+wasteNot = Action("wasteNot", "Waste Not", cpCost=56, aType='countdown', activeTurns=4)
+wasteNot2 = Action("wasteNot2", "Waste Not II", cpCost=98, aType='countdown', activeTurns=8)
+innovation = Action("innovation", "Innovation", cpCost=18, aType='countdown', activeTurns=3)
+greatStrides = Action("greatStrides", "Great Strides", cpCost=32, aType='countdown', activeTurns=3)
+ingenuity = Action("ingenuity", "Ingenuity", cpCost=24, aType="countdown", activeTurns=5)
+ingenuity2 = Action("ingenuity2", "Ingenuity II", cpCost=32, aType="countdown", activeTurns=5)
 
 # Call to GA
 def mainGA(mySynth, myActions, penaltyWeight, seqLength, seed=None):
