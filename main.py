@@ -265,7 +265,7 @@ def simSynth(individual, synth, verbose=True, debug=False):
             if comfortZone.name in effects.countDowns and cpState > 0:
                 cpState += 8
 
-            if action == rumination:
+            if action == rumination and cpState > 0:
                 if innerQuiet.name in effects.countUps and effects.countUps[innerQuiet.name] > 0:
                     cpState += (21 * effects.countUps[innerQuiet.name] - effects.countUps[innerQuiet.name]**2 + 10)/2
                     del effects.countUps[innerQuiet.name]
@@ -281,7 +281,7 @@ def simSynth(individual, synth, verbose=True, debug=False):
             if action.qualityIncreaseMultiplier > 0 and greatStrides.name in effects.countDowns:
                 del effects.countDowns[greatStrides.name]
 
-            if action == tricksOfTheTrade:
+            if action == tricksOfTheTrade and cpState > 0:
                 trickUses += 1
                 cpState += 20
 
@@ -489,7 +489,7 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False):
             if comfortZone.name in effects.countDowns and cpState > 0:
                 cpState += 8
 
-            if action == rumination:
+            if action == rumination and cpState > 0:
                 if innerQuiet.name in effects.countUps and effects.countUps[innerQuiet.name] > 0:
                     cpState += (21 * effects.countUps[innerQuiet.name] - effects.countUps[innerQuiet.name]**2 + 10)/2
                     del effects.countUps[innerQuiet.name]
@@ -505,7 +505,7 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False):
             if action.qualityIncreaseMultiplier > 0 and greatStrides.name in effects.countDowns:
                 del effects.countDowns[greatStrides.name]
 
-            if action == tricksOfTheTrade:
+            if action == tricksOfTheTrade and cpState > 0:
                 trickUses += 1
                 cpState += 20
 
@@ -578,6 +578,14 @@ def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False):
     avgProgress = sum([x.progressState for x in finalStateTracker])/nRuns
 
     print("%2s %-20s %5i %5i %5.1f %5.1f" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress))
+
+    minDurability = min([x.durabilityState for x in finalStateTracker])
+    minCp = min([x.cpState for x in finalStateTracker])
+    minQuality = min([x.qualityState for x in finalStateTracker])
+    minProgress = min([x.progressState for x in finalStateTracker])
+
+    print("%2s %-20s %5i %5i %5.1f %5.1f" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress))
+
 
 def generateInitialGuess(synth, seqLength):
     nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.CalculateBaseProgressIncrease((synth.crafter.level-synth.recipe.level), synth.crafter.craftsmanship)) )
@@ -783,7 +791,7 @@ def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
     stats.register("min", min)
     stats.register("max", max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 100, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 200, stats, halloffame=hof)
 
     # Print Best Individual
     #==============================
@@ -812,13 +820,17 @@ def mainRecipeWrapper():
     myActions.pop(0)
 
     # Call to GP
-    best = mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)[0]
+    #best = mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)[0]
+    best = [innerQuiet, tricksOfTheTrade, steadyHand, tricksOfTheTrade, greatStrides, standardTouch, manipulation,
+            basicSynth, steadyHand, hastyTouch, hastyTouch, hastyTouch, greatStrides, standardTouch, basicSynth]
+    print("\nBest:")
+    print(best)
 
     print("\nProbablistic")
     simSynth(best, mySynth, False, True)
 
     print("\nMonteCarlo")
-    MonteCarloSim(best, mySynth)
+    MonteCarloSim(best, mySynth, 500)
 
 if __name__ == "__main__":
     mainRecipeWrapper()
