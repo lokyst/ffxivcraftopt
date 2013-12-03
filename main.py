@@ -2,7 +2,6 @@
 # by Rhoda Baker (rhoda.baker@gmail.com)
 #
 # TODO
-# Monte-Carlo
 # Initial guess for GP method
 # HQ function
 # UI
@@ -59,6 +58,7 @@ class Recipe:
         self.startQuality = startQuality
         self.maxQuality = maxQuality
 
+#noinspection PyMethodMayBeStatic
 class Synth:
     def __init__(self, crafter=Crafter(), recipe=Recipe(), maxTrickUses=0, useConditions=False):
         self.crafter = crafter
@@ -719,7 +719,7 @@ def mainGA(mySynth, myActions, penaltyWeight, seqLength, seed=None):
 
     return best_ind, pop, stats, hof
 
-def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
+def mainGP(mySynth, myActions, penaltyWeight, seed=None):
     # Do this be able to print the seed used
     if seed is None:
         seed = random.randint(0, 19770216)
@@ -820,9 +820,9 @@ def mainRecipeWrapper():
     myActions.pop(0)
 
     # Call to GP
-    #best = mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)[0]
-    best = [innerQuiet, tricksOfTheTrade, steadyHand, tricksOfTheTrade, greatStrides, standardTouch, manipulation,
-            basicSynth, steadyHand, hastyTouch, hastyTouch, hastyTouch, greatStrides, standardTouch, basicSynth]
+    best = mainGP(mySynth, myActions, penaltyWeight, seed)[0]
+    #best = [innerQuiet, tricksOfTheTrade, steadyHand, tricksOfTheTrade, greatStrides, standardTouch, manipulation,
+    #        basicSynth, steadyHand, hastyTouch, hastyTouch, hastyTouch, greatStrides, standardTouch, basicSynth]
     print("\nBest:")
     print(best)
 
