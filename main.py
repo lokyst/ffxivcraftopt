@@ -342,7 +342,7 @@ def simSynth(individual, synth, verbose=True, debug=False):
         print("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     if debug:
-        print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
+        print("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     return finalState
 
@@ -570,14 +570,14 @@ def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False):
         finalStateTracker.append(runSynth)
 
         if verbose:
-            print(i, runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState)
+            print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (i, "MonteCarlo", runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState, runSynth.wastedActions))
 
     avgDurability = sum([x.durabilityState for x in finalStateTracker])/nRuns
     avgCp = sum([x.cpState for x in finalStateTracker])/nRuns
     avgQuality = sum([x.qualityState for x in finalStateTracker])/nRuns
     avgProgress = sum([x.progressState for x in finalStateTracker])/nRuns
 
-    print(avgDurability, avgCp, avgQuality, avgProgress)
+    print("%2s %-20s %5i %5i %5.1f %5.1f" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress))
 
 def generateInitialGuess(synth, seqLength):
     nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.CalculateBaseProgressIncrease((synth.crafter.level-synth.recipe.level), synth.crafter.craftsmanship)) )
@@ -709,28 +709,7 @@ def mainGA(mySynth, myActions, penaltyWeight, seqLength, seed=None):
     print("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
     simSynth(best_ind, mySynth)
 
-    return pop, stats, hof
-
-def mainSim(mySynth):
-    # Test cases
-    #test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
-    #         steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
-    #
-    #test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, hastyTouch,
-    #         steadyHand, wasteNot, byregotsBlessing, basicSynth]
-    #
-    #test = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, byregotsBlessing, innerQuiet,
-    #         steadyHand, wasteNot, hastyTouch, hastyTouch, basicSynth]
-    #
-    #test = [innerQuiet, steadyHand, wasteNot2, wasteNot, advancedTouch, advancedTouch, advancedTouch, advancedTouch,
-    #        advancedTouch, advancedTouch, advancedTouch, advancedTouch, basicSynth]
-    #
-    #test = [innerQuiet, steadyHand2, wasteNot2, basicTouch, basicTouch, basicTouch, basicTouch, steadyHand2, greatStrides, byregotsBlessing, standardSynthesis]
-
-    test = [innerQuiet, steadyHand2, ingenuity2, ingenuity, basicTouch, basicTouch, basicTouch, basicTouch, tricksOfTheTrade, basicSynth]
-
-    simSynth(test, mySynth, False, True)
-    MonteCarloSim(test, mySynth)
+    return best_ind, pop, stats, hof
 
 def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
     # Do this be able to print the seed used
@@ -804,7 +783,7 @@ def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
     stats.register("min", min)
     stats.register("max", max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 200, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 100, stats, halloffame=hof)
 
     # Print Best Individual
     #==============================
@@ -812,7 +791,7 @@ def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
     print("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
     simSynth(best_ind, mySynth)
 
-    return pop, hof, stats
+    return best_ind, pop, hof, stats
 
 
 def mainRecipeWrapper():
@@ -821,7 +800,7 @@ def mainRecipeWrapper():
     # Synth details
     penaltyWeight = 10000
     seqLength = 20
-    #seed = 64
+    seed = None
     myCrafter = Crafter(136,137,252,25)
     #myRecipe = Recipe(10,45,60,0,629)
     myRecipe = Recipe(26,45,40,0,1332)
@@ -833,8 +812,13 @@ def mainRecipeWrapper():
     myActions.pop(0)
 
     # Call to GP
-    #mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)
-    mainSim(mySynth)
+    best = mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)[0]
+
+    print("\nProbablistic")
+    simSynth(best, mySynth, False, True)
+
+    print("\nMonteCarlo")
+    MonteCarloSim(best, mySynth)
 
 if __name__ == "__main__":
     mainRecipeWrapper()
