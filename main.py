@@ -346,6 +346,239 @@ def simSynth(individual, synth, verbose=True, debug=False):
 
     return finalState
 
+# MoneCarlo Simulation Function
+def MonteCarloSynth(individual, synth, verbose=True, debug=False):
+    # State tracking
+    durabilityState = synth.recipe.durability
+    cpState = synth.crafter.craftPoints
+    progressState = 0
+    qualityState = synth.recipe.startQuality
+    stepCount = 0
+    wastedActions = 0
+    effects = EffectTracker()
+    maxTricksUses = synth.maxTrickUses
+    trickUses = 0
+    condition = "Normal"
+
+    # Strip Tricks of the Trade
+    individual = [x for x in individual if x != tricksOfTheTrade]
+
+    # Conditions
+    pGood = 0.23
+    pExcellent = 0.01
+
+    # End state checks
+    progressOk = False
+    cpOk = False
+    durabilityOk = False
+    trickOk = False
+
+    if verbose:
+        print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
+        print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
+
+    if debug:
+        print("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
+        print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
+
+    for action in individual:
+        # Occur regardless of dummy actions
+        #==================================
+        stepCount += 1
+
+        # Add effect modifiers
+        craftsmanship = synth.crafter.craftsmanship
+        control = synth.crafter.control
+        if innerQuiet.name in effects.countUps:
+            control *= (1 + 0.2 * effects.countUps[innerQuiet.name])
+
+        if innovation.name in effects.countDowns:
+            control *= 1.5
+
+        levelDifference = synth.crafter.level - synth.recipe.level
+        if ingenuity2.name in effects.countDowns:
+            levelDifference = 3
+        elif ingenuity.name in effects.countDowns:
+            levelDifference = 0
+
+        if steadyHand2.name in effects.countDowns:
+            successProbability = action.successProbability + 0.3        # What is effect of having both active? Assume 2 always overrides 1 but does not overwrite
+        elif steadyHand.name in effects.countDowns:
+            successProbability = action.successProbability + 0.2
+        else:
+            successProbability = action.successProbability
+        successProbability = min(successProbability, 1)
+
+        qualityIncreaseMultiplier = action.qualityIncreaseMultiplier
+        if greatStrides.name in effects.countDowns:
+            qualityIncreaseMultiplier *= 2
+
+        # Condition Calculation
+        if condition == "Excellent":
+            condition = "Poor"
+            qualityIncreaseMultiplier *= 0.5
+        elif condition == "Good" or condition == "Poor":
+            condition = "Normal"
+        else:
+            condRand = random.uniform(0,1)
+            if 0 <= condRand < pExcellent:
+                condition = "Excellent"
+                qualityIncreaseMultiplier *= 4
+            elif pExcellent <= condRand < (pExcellent + pGood):
+                condition = "Good"
+
+                if trickUses < maxTricksUses:
+                    # Assumes first N good actions will always be used for ToT
+                    trickUses += 1
+                    cpState += 20
+                else:
+                    qualityIncreaseMultiplier *= 1.5
+
+            else:
+                condition = "Normal"
+                qualityIncreaseMultiplier *= 1
+
+        # Calculate final gains / losses
+        success = 0
+        successRand = random.uniform(0,1)
+        if 0 <= successRand <= successProbability:
+            success = 1
+
+        bProgressGain = action.progressIncreaseMultiplier * synth.CalculateBaseProgressIncrease(levelDifference, craftsmanship)
+        if action == flawlessSynthesis:
+            bProgressGain = 40
+        elif action == pieceByPiece:
+            bProgressGain = (synth.recipe.difficulty - progressState)/3
+        progressGain = success * bProgressGain
+
+        bQualityGain = qualityIncreaseMultiplier * synth.CalculateBaseQualityIncrease(levelDifference, control)
+        qualityGain = success * bQualityGain
+        if action == byregotsBlessing:
+            qualityGain *= (1 + 0.2 * effects.countUps[innerQuiet.name])
+
+        durabilityCost = action.durabilityCost
+        if wasteNot.name in effects.countDowns or wasteNot2.name in effects.countDowns:
+            durabilityCost = 0.5 * action.durabilityCost
+
+        # Occur if a dummy action
+        #==================================
+        if (progressState >= synth.recipe.difficulty or durabilityState <= 0) and action != dummyAction:
+            wastedActions += 1
+
+        # Occur if not a dummy action
+        #==================================
+        else:
+            # State tracking
+            progressState += progressGain
+            qualityState += qualityGain
+            durabilityState -= durabilityCost
+            cpState -= action.cpCost
+
+            # Effect management
+            #==================================
+            # Special Effect Actions
+            if action == mastersMend:
+                durabilityState += 30
+
+            if action == mastersMend2:
+                durabilityState += 60
+
+            if manipulation.name in effects.countDowns and durabilityState > 0:
+                durabilityState += 10
+
+            if comfortZone.name in effects.countDowns and cpState > 0:
+                cpState += 8
+
+            if action == rumination:
+                if innerQuiet.name in effects.countUps and effects.countUps[innerQuiet.name] > 0:
+                    cpState += (21 * effects.countUps[innerQuiet.name] - effects.countUps[innerQuiet.name]**2 + 10)/2
+                    del effects.countUps[innerQuiet.name]
+                else:
+                    wastedActions += 1
+
+            if action == byregotsBlessing:
+                if innerQuiet.name in effects.countUps:
+                    del effects.countUps[innerQuiet.name]
+                else:
+                    wastedActions += 1
+
+            if action.qualityIncreaseMultiplier > 0 and greatStrides.name in effects.countDowns:
+                del effects.countDowns[greatStrides.name]
+
+            if action == tricksOfTheTrade:
+                trickUses += 1
+                cpState += 20
+
+            # Decrement countdowns
+            for countDown in list(effects.countDowns.keys()):
+                effects.countDowns[countDown] -= 1
+                if effects.countDowns[countDown] == 0:
+                    del effects.countDowns[countDown]
+
+            # Increment countups
+            if action.qualityIncreaseMultiplier > 0 and innerQuiet.name in effects.countUps:
+                effects.countUps[innerQuiet.name] += 1 * successProbability
+
+            # Initialize new effects after countdowns are managed to reset them properly
+            if action.type == "countup":
+                effects.countUps[action.name] = 0
+
+            if action.type == "countdown":
+                effects.countDowns[action.name] = action.activeTurns
+
+            # Sanity checks for state variables
+            durabilityState = min(durabilityState, synth.recipe.durability)
+            cpState = min(cpState, synth.crafter.craftPoints)
+
+        if verbose:
+            print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
+
+        if debug:
+            iqCnt = 0
+            if innerQuiet.name in effects.countUps:
+                iqCnt = effects.countUps[innerQuiet.name]
+            print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
+
+    # Penalise failure outcomes
+    if progressState >= synth.recipe.difficulty:
+        progressOk = True
+
+    if cpState >= 0:
+        cpOk = True
+
+    if durabilityState >= 0 and progressState >= synth.recipe.difficulty:
+        durabilityOk = True
+
+    if trickUses <= synth.maxTrickUses:
+        trickOk = True
+
+    finalState = State(stepCount, individual[-1].name, durabilityState, cpState, qualityState, progressState,
+                       wastedActions, progressOk, cpOk, durabilityOk, trickOk)
+
+    if verbose:
+        print("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+
+    if debug:
+        print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
+
+    return finalState
+
+def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False):
+    finalStateTracker = []
+    for i in range(nRuns):
+        runSynth = MonteCarloSynth(individual, synth, False, debug)
+        finalStateTracker.append(runSynth)
+
+        if verbose:
+            print(i, runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState)
+
+    avgDurability = sum([x.durabilityState for x in finalStateTracker])/nRuns
+    avgCp = sum([x.cpState for x in finalStateTracker])/nRuns
+    avgQuality = sum([x.qualityState for x in finalStateTracker])/nRuns
+    avgProgress = sum([x.progressState for x in finalStateTracker])/nRuns
+
+    print(avgDurability, avgCp, avgQuality, avgProgress)
+
 def generateInitialGuess(synth, seqLength):
     nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.CalculateBaseProgressIncrease((synth.crafter.level-synth.recipe.level), synth.crafter.craftsmanship)) )
 
@@ -497,6 +730,7 @@ def mainSim(mySynth):
     test = [innerQuiet, steadyHand2, ingenuity2, ingenuity, basicTouch, basicTouch, basicTouch, basicTouch, tricksOfTheTrade, basicSynth]
 
     simSynth(test, mySynth, False, True)
+    MonteCarloSim(test, mySynth)
 
 def mainGP(mySynth, myActions, penaltyWeight, seqLength, seed=None):
     # Do this be able to print the seed used
@@ -587,7 +821,7 @@ def mainRecipeWrapper():
     # Synth details
     penaltyWeight = 10000
     seqLength = 20
-    seed = 64
+    #seed = 64
     myCrafter = Crafter(136,137,252,25)
     #myRecipe = Recipe(10,45,60,0,629)
     myRecipe = Recipe(26,45,40,0,1332)
@@ -599,7 +833,8 @@ def mainRecipeWrapper():
     myActions.pop(0)
 
     # Call to GP
-    mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)
+    #mainGP(mySynth, myActions, penaltyWeight, seqLength, seed)
+    mainSim(mySynth)
 
 if __name__ == "__main__":
     mainRecipeWrapper()
