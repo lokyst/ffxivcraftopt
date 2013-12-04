@@ -44,11 +44,15 @@ def CreateMacro(actionList, waitTime=3):
 
 # ==== Model Stuff
 class Crafter:
-    def __init__(self, craftsmanship=0, control=0, craftPoints=0, level=0):
+    def __init__(self, level=0, craftsmanship=0, control=0, craftPoints=0, actions=None):
         self.craftsmanship = craftsmanship
         self.control = control
         self.craftPoints = craftPoints
         self.level = level
+        if actions is None:
+            self.actions = []
+        else:
+            self.actions = actions
 
 class Recipe:
     def __init__(self, level=0, difficulty=0, durability=0, startQuality= 0, maxQuality=0):
@@ -60,7 +64,7 @@ class Recipe:
 
 #noinspection PyMethodMayBeStatic
 class Synth:
-    def __init__(self, crafter=Crafter(), recipe=Recipe(), maxTrickUses=0, useConditions=False):
+    def __init__(self, crafter, recipe, maxTrickUses=0, useConditions=False):
         self.crafter = crafter
         self.recipe = recipe
         self.maxTrickUses = maxTrickUses
@@ -642,10 +646,14 @@ ingenuity = Action("ingenuity", "Ingenuity", cpCost=24, aType="countdown", activ
 ingenuity2 = Action("ingenuity2", "Ingenuity II", cpCost=32, aType="countdown", activeTurns=5)
 
 # Call to GA
-def mainGA(mySynth, myActions, penaltyWeight, seqLength, seed=None):
+def mainGA(mySynth, penaltyWeight, seqLength, seed=None):
     if seed is None:
         seed = random.randint(0, 19770216)
     random.seed(seed)
+
+    # Insert dummy action as padding
+    myActions = list(mySynth.crafter.actions)
+    myActions.insert(0, dummyAction)
 
     myInitialGuess = generateInitialGuess(mySynth, seqLength)
 
@@ -719,11 +727,13 @@ def mainGA(mySynth, myActions, penaltyWeight, seqLength, seed=None):
 
     return best_ind, pop, stats, hof
 
-def mainGP(mySynth, myActions, penaltyWeight, seed=None):
+def mainGP(mySynth, penaltyWeight, seed=None):
     # Do this be able to print the seed used
     if seed is None:
         seed = random.randint(0, 19770216)
     random.seed(seed)
+
+    myActions = mySynth.crafter.actions
 
     # Create the set of primitives and terminals to set up the AST
     pset = gp.PrimitiveSet("MAIN", 0)
@@ -791,7 +801,7 @@ def mainGP(mySynth, myActions, penaltyWeight, seed=None):
     stats.register("min", min)
     stats.register("max", max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 200, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.5, 300, stats, halloffame=hof)
 
     # Print Best Individual
     #==============================
@@ -809,20 +819,21 @@ def mainRecipeWrapper():
     penaltyWeight = 10000
     seqLength = 20
     seed = None
-    myCrafter = Crafter(136,137,252,25)
-    #myRecipe = Recipe(10,45,60,0,629)
-    myRecipe = Recipe(26,45,40,0,1332)
-    mySynth = Synth(myCrafter, myRecipe, maxTrickUses=2, useConditions=True)
-    myActions = [dummyAction, basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade,
+    myLeatherWorkerActions = [basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade,
                  rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
+    myLeatherWorker = Crafter(25, 136, 137, 252, myLeatherWorkerActions) # Leatherworker
 
-    # Drop the dummy action when using GP
-    myActions.pop(0)
+    myWeaverActions = [basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch,
+                 rumination, wasteNot, manipulation, carefulSynthesis, observe]
+    myWeaver = Crafter(15, 103, 104, 213, myWeaverActions) # Weaver
+
+    cottonYarn = Recipe(12,26,40,0,702)   # Cotton yarn
+    goatskinRing = Recipe(20,74,70,0,1053)   # Goatskin Ring
+
+    mySynth = Synth(myWeaver, cottonYarn, maxTrickUses=2, useConditions=True)
 
     # Call to GP
-    best = mainGP(mySynth, myActions, penaltyWeight, seed)[0]
-    #best = [innerQuiet, tricksOfTheTrade, steadyHand, tricksOfTheTrade, greatStrides, standardTouch, manipulation,
-    #        basicSynth, steadyHand, hastyTouch, hastyTouch, hastyTouch, greatStrides, standardTouch, basicSynth]
+    best = mainGP(mySynth, penaltyWeight, seed)[0]
     print("\nBest:")
     print(best)
 
