@@ -727,7 +727,7 @@ def mainGA(mySynth, penaltyWeight, seqLength, seed=None):
 
     return best_ind, pop, stats, hof
 
-def mainGP(mySynth, penaltyWeight, seed=None):
+def mainGP(mySynth, penaltyWeight, seed=None, initialGuess = None):
     # Do this be able to print the seed used
     if seed is None:
         seed = random.randint(0, 19770216)
@@ -793,7 +793,25 @@ def mainGP(mySynth, penaltyWeight, seed=None):
     toolbox.register("expr_mut", gp.genRamped, min_=0, max_=2)
     toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut)
 
+    # Set up initial guess in primitive form
     pop = toolbox.population(n=300)
+    if not initialGuess is None:
+        tempList = []
+
+        for item in initialGuess:
+            if hasattr(item, "name"):
+                for terminal in pset.terminals[None]:
+                    if item == terminal.value:
+                        tempList.append(terminal)
+                        break
+
+        myPrimitive = pset.primitives[None][0]
+        tempList = (len(tempList)-1) * [myPrimitive] + tempList
+
+        pop.pop(0)
+        iniGuess = creator.Individual(tempList)
+        pop.insert(0, iniGuess)
+
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", tools.mean)
@@ -801,7 +819,7 @@ def mainGP(mySynth, penaltyWeight, seed=None):
     stats.register("min", min)
     stats.register("max", max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.5, 300, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.5, 200, stats, halloffame=hof)
 
     # Print Best Individual
     #==============================
@@ -833,7 +851,8 @@ def mainRecipeWrapper():
     mySynth = Synth(myWeaver, cottonYarn, maxTrickUses=2, useConditions=True)
 
     # Call to GP
-    best = mainGP(mySynth, penaltyWeight, seed)[0]
+    iniGuess = [innerQuiet, steadyHand, hastyTouch, basicTouch, hastyTouch, manipulation, steadyHand, hastyTouch, basicTouch, basicTouch, basicSynth]
+    best = mainGP(mySynth, penaltyWeight, seed, iniGuess)[0]
     print("\nBest:")
     print(best)
 
