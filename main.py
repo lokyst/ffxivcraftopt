@@ -28,18 +28,29 @@ def flatten_prog(prog):
     return [x.value for x in prog if isinstance(x, gp.Terminal)]
 
 # ==== Macro Stuff
-def CreateMacro(actionList, waitTime=3):
-    macroList = [x.name for x in actionList if x != dummyAction]        # Strip dummy actions
+def CreateMacro(actionList, waitTime=3, insertTricks=False):
+    macroList = [x.name for x in actionList if x != dummyAction and x != tricksOfTheTrade]        # Strip dummy actions and tricks
 
+    maxLines = 14
+
+    macroStringList = []
     waitString = "/wait %i\n" % (waitTime,)
-    count = 0
-    macroString = ""
     for action in macroList:
+        macroStringList.append("/ac \"" + action + "\" <me>\n")
+        macroStringList.append(waitString)
+        if insertTricks:
+            macroStringList.append("/ac \"" + tricksOfTheTrade.name + "\" <me>\n")
+            macroStringList.append(waitString)
+
+    macroString = ""
+    count = 0
+    for actionString in macroStringList:
         count += 1
-        if count % 8 == 0:
+        macroString += actionString
+        if count % maxLines == 0:
+            macroString += "/echo Macro step %i complete" % (count/maxLines,)
             macroString += "\n=====================================\n\n"
-        macroString += "/ac \"" + action + "\" <me>\n"
-        macroString += waitString
+    macroString += "/echo Macro step %i complete" % (math.ceil(count/maxLines),)
 
     return macroString
 
@@ -842,9 +853,9 @@ def mainRecipeWrapper():
                  rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
     myLeatherWorker = Crafter(25, 136, 137, 252, myLeatherWorkerActions) # Leatherworker
 
-    myWeaverActions = [basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch,
+    myWeaverActions = [basicSynth, basicTouch, mastersMend, steadyHand, innerQuiet, hastyTouch, tricksOfTheTrade,
                  rumination, wasteNot, manipulation, carefulSynthesis, observe]
-    myWeaver = Crafter(15, 103, 104, 213, myWeaverActions) # Weaver
+    myWeaver = Crafter(15, 108, 107, 213, myWeaverActions) # Weaver
 
     cottonYarn = Recipe(12,26,40,0,702)   # Cotton yarn
     goatskinRing = Recipe(20,74,70,0,1053)   # Goatskin Ring
@@ -862,6 +873,8 @@ def mainRecipeWrapper():
 
     print("\nMonteCarlo")
     MonteCarloSim(best, mySynth, 500)
+
+    print(CreateMacro(best),True)
 
 if __name__ == "__main__":
     mainRecipeWrapper()
