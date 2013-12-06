@@ -6,6 +6,7 @@
 # HQ function
 # UI
 
+from __future__ import print_function
 import random, math
 from functools import partial
 
