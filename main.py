@@ -854,7 +854,7 @@ def mainGP(mySynth, penaltyWeight, seed=None, initialGuess = None):
     stats.register("min", min)
     stats.register("max", max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.5, 200, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 200, stats, halloffame=hof)
 
     # Print Best Individual
     #==============================
@@ -877,17 +877,19 @@ def mainRecipeWrapper():
     myLeatherWorker = Crafter(25, 136, 137, 252, myLeatherWorkerActions) # Leatherworker
 
     myWeaverActions = [basicSynth, basicTouch, mastersMend, steadyHand, innerQuiet, hastyTouch, tricksOfTheTrade,
-                 rumination, wasteNot, manipulation, carefulSynthesis, observe]
-    myWeaver = Crafter(16, 108, 107, 213, myWeaverActions) # Weaver
+                 rumination, wasteNot, manipulation, carefulSynthesis, observe, standardSynthesis]
+    myWeaver = Crafter(18, 119, 111, 243, myWeaverActions) # Weaver
 
     cottonYarn = Recipe(12,26,40,0,702)   # Cotton yarn
     cottonCloth = Recipe(13,27,40,0,726)   # Cotton yarn
     goatskinRing = Recipe(20,74,70,0,1053)   # Goatskin Ring
+    cottonScarf = Recipe(15,55,70,0,807)   # Cotton Scarf
 
-    mySynth = Synth(myWeaver, cottonCloth, maxTrickUses=0, useConditions=True)
+    mySynth = Synth(myWeaver, cottonScarf, maxTrickUses=2, useConditions=True)
 
     # Call to GP
-    iniGuess = [innerQuiet, steadyHand, wasteNot, hastyTouch, basicTouch, basicTouch, hastyTouch, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, basicSynth]
+    #iniGuess = [innerQuiet, steadyHand, wasteNot, hastyTouch, basicTouch, basicTouch, hastyTouch, steadyHand, wasteNot, hastyTouch, hastyTouch, basicTouch, basicSynth] # cotton cloth
+    iniGuess = [innerQuiet, steadyHand, basicTouch, carefulSynthesis, basicTouch, tricksOfTheTrade, tricksOfTheTrade, mastersMend, carefulSynthesis, steadyHand, basicTouch, hastyTouch, basicTouch, basicTouch, basicTouch, carefulSynthesis] # cotton scarf
     #iniGuess = [innerQuiet, tricksOfTheTrade, steadyHand, wasteNot, hastyTouch, basicTouch, basicTouch, basicTouch, tricksOfTheTrade, steadyHand, wasteNot, hastyTouch, basicTouch, hastyTouch, basicSynth]
     best = mainGP(mySynth, penaltyWeight, seed, iniGuess)[0]
     print("\nBest:")
