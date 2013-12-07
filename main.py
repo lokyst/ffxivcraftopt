@@ -855,15 +855,16 @@ def mainRecipeWrapper():
 
     myWeaverActions = [basicSynth, basicTouch, mastersMend, steadyHand, innerQuiet, hastyTouch, tricksOfTheTrade,
                  rumination, wasteNot, manipulation, carefulSynthesis, observe]
-    myWeaver = Crafter(15, 108, 107, 213, myWeaverActions) # Weaver
+    myWeaver = Crafter(16, 108, 107, 213, myWeaverActions) # Weaver
 
     cottonYarn = Recipe(12,26,40,0,702)   # Cotton yarn
+    cottonCloth = Recipe(13,27,40,0,726)   # Cotton yarn
     goatskinRing = Recipe(20,74,70,0,1053)   # Goatskin Ring
 
-    mySynth = Synth(myWeaver, cottonYarn, maxTrickUses=2, useConditions=True)
+    mySynth = Synth(myWeaver, cottonCloth, maxTrickUses=2, useConditions=True)
 
     # Call to GP
-    iniGuess = [innerQuiet, steadyHand, hastyTouch, basicTouch, hastyTouch, manipulation, steadyHand, hastyTouch, basicTouch, basicTouch, basicSynth]
+    iniGuess = [innerQuiet, steadyHand, wasteNot, hastyTouch, basicTouch, hastyTouch, hastyTouch, steadyHand, wasteNot, hastyTouch, basicTouch, hastyTouch, basicSynth]
     best = mainGP(mySynth, penaltyWeight, seed, iniGuess)[0]
     print("\nBest:")
     print(best)
@@ -874,7 +875,8 @@ def mainRecipeWrapper():
     print("\nMonteCarlo")
     MonteCarloSim(best, mySynth, 500)
 
-    print(CreateMacro(best),True)
+    print("\nMacro")
+    print(CreateMacro(best, waitTime=3, insertTricks=True))
 
 if __name__ == "__main__":
     mainRecipeWrapper()
