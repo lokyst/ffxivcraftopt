@@ -877,20 +877,33 @@ def mainRecipeWrapper():
     myLeatherWorker = Crafter(25, 136, 137, 252, myLeatherWorkerActions) # Leatherworker
 
     myWeaverActions = [basicSynth, basicTouch, mastersMend, steadyHand, innerQuiet, hastyTouch, tricksOfTheTrade,
-                 rumination, wasteNot, manipulation, carefulSynthesis, observe, standardSynthesis]
-    myWeaver = Crafter(18, 119, 111, 243, myWeaverActions) # Weaver
+                 rumination, wasteNot, manipulation, carefulSynthesis, observe, standardTouch]
+    myWeaver = Crafter(20, 119, 117, 243, myWeaverActions) # Weaver
 
-    cottonYarn = Recipe(12,26,40,0,702)   # Cotton yarn
-    cottonCloth = Recipe(13,27,40,0,726)   # Cotton yarn
+    cottonYarn = Recipe(12,26,40,0,702)
+    cottonCloth = Recipe(13,27,40,0,726)
+    #iniGuess = [innerQuiet, steadyHand, wasteNot, hastyTouch, hastyTouch, standardTouch, basicTouch, tricksOfTheTrade, steadyHand, tricksOfTheTrade, wasteNot, hastyTouch, basicTouch, standardTouch, basicSynth]
+    #iniGuess = [steadyHand, wasteNot, standardTouch, standardTouch, standardTouch, standardTouch, standardTouch, basicSynth]
     goatskinRing = Recipe(20,74,70,0,1053)   # Goatskin Ring
-    cottonScarf = Recipe(15,55,70,0,807)   # Cotton Scarf
+    cottonScarf = Recipe(15,55,70,0,807)
+    #iniGuess = [innerQuiet, tricksOfTheTrade, steadyHand, carefulSynthesis, hastyTouch, standardTouch, hastyTouch, steadyHand, standardTouch, tricksOfTheTrade, wasteNot, standardTouch, standardTouch, standardTouch, basicSynth]
+    cottonChausses = Recipe(14,54,60,0,751)
+    #iniGuess = [innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade, hastyTouch, basicTouch, carefulSynthesis, manipulation, steadyHand, standardTouch, standardTouch, tricksOfTheTrade, basicTouch, standardTouch, carefulSynthesis]
+    cottonHalfGloves = Recipe(15,55,70,0,807)
+    #iniGuess = [innerQuiet, tricksOfTheTrade, steadyHand, carefulSynthesis, hastyTouch, hastyTouch, standardTouch, standardTouch, steadyHand, tricksOfTheTrade, wasteNot, standardTouch, standardTouch, standardTouch, carefulSynthesis]
+    cottonTurban = Recipe(13,54,60,0,726)
+    #iniGuess = [innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade, hastyTouch, standardTouch, standardTouch, manipulation, steadyHand, standardTouch, basicSynth, tricksOfTheTrade, hastyTouch, standardTouch, carefulSynthesis]
+    cottonShepherdsTunic = Recipe(16,63,70,0,866)
+    iniGuess = [innerQuiet, steadyHand, wasteNot, basicTouch, basicTouch, basicTouch, hastyTouch, tricksOfTheTrade, steadyHand, hastyTouch, basicTouch, tricksOfTheTrade, wasteNot, basicTouch, carefulSynthesis, basicTouch, basicSynth, carefulSynthesis]
+    cottonKurta = Recipe(18,67,70,0,939)
+    #iniGuess = [innerQuiet, steadyHand, wasteNot, basicTouch, hastyTouch, hastyTouch, hastyTouch, steadyHand, hastyTouch, tricksOfTheTrade, standardTouch, standardTouch, standardTouch, tricksOfTheTrade, rumination, mastersMend, hastyTouch, basicSynth, basicSynth, basicSynth]
+    initiatesSlops = Recipe(20,74,70,0,1053)
+    iniGuess = [innerQuiet, steadyHand, wasteNot, basicSynth, hastyTouch, hastyTouch, hastyTouch, steadyHand, hastyTouch, tricksOfTheTrade, standardTouch, standardTouch, standardTouch, tricksOfTheTrade, rumination, mastersMend, hastyTouch, basicSynth, basicTouch, basicSynth]
 
-    mySynth = Synth(myWeaver, cottonScarf, maxTrickUses=2, useConditions=True)
+
+    mySynth = Synth(myWeaver, initiatesSlops, maxTrickUses=2, useConditions=True)
 
     # Call to GP
-    #iniGuess = [innerQuiet, steadyHand, wasteNot, hastyTouch, basicTouch, basicTouch, hastyTouch, steadyHand, wasteNot, hastyTouch, hastyTouch, basicTouch, basicSynth] # cotton cloth
-    iniGuess = [innerQuiet, steadyHand, basicTouch, carefulSynthesis, basicTouch, tricksOfTheTrade, tricksOfTheTrade, mastersMend, carefulSynthesis, steadyHand, basicTouch, hastyTouch, basicTouch, basicTouch, basicTouch, carefulSynthesis] # cotton scarf
-    #iniGuess = [innerQuiet, tricksOfTheTrade, steadyHand, wasteNot, hastyTouch, basicTouch, basicTouch, basicTouch, tricksOfTheTrade, steadyHand, wasteNot, hastyTouch, basicTouch, hastyTouch, basicSynth]
     best = mainGP(mySynth, penaltyWeight, seed, iniGuess)[0]
     print("\nBest:")
     print(best)
@@ -901,8 +914,8 @@ def mainRecipeWrapper():
     print("\nMonteCarlo")
     MonteCarloSim(best, mySynth, 500)
 
-    print("\nMacro")
-    print(CreateMacro(best, waitTime=3, insertTricks=False))
+    #print("\nMacro")
+    #print(CreateMacro(best, waitTime=3, insertTricks=False))
 
 if __name__ == "__main__":
     mainRecipeWrapper()
