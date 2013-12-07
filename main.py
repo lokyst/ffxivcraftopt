@@ -592,16 +592,20 @@ def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False):
     avgCp = sum([x.cpState for x in finalStateTracker])/nRuns
     avgQuality = sum([x.qualityState for x in finalStateTracker])/nRuns
     avgProgress = sum([x.progressState for x in finalStateTracker])/nRuns
+    avgQualityPercent = avgQuality/synth.recipe.maxQuality * 100
+    avgHqPercent = hqPercentFromQuality(avgQualityPercent)
 
-    print("%2s %-20s %5i %5i %5.1f %5.1f" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress))
+    print("%2s %-20s %5s %5s %5s %5s %5s" % ("", "", "DUR", "CP", "QUA", "PRG", "HQ%"))
+    print("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress, avgHqPercent))
 
     minDurability = min([x.durabilityState for x in finalStateTracker])
     minCp = min([x.cpState for x in finalStateTracker])
     minQuality = min([x.qualityState for x in finalStateTracker])
     minProgress = min([x.progressState for x in finalStateTracker])
+    minQualityPercent = minQuality/synth.recipe.maxQuality * 100
+    minHqPercent = hqPercentFromQuality(minQualityPercent)
 
-    print("%2s %-20s %5i %5i %5.1f %5.1f" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress))
-
+    print("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress, minHqPercent))
 
 def generateInitialGuess(synth, seqLength):
     nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.CalculateBaseProgressIncrease((synth.crafter.level-synth.recipe.level), synth.crafter.craftsmanship)) )
@@ -739,6 +743,25 @@ def mainGA(mySynth, penaltyWeight, seqLength, seed=None):
 
     return best_ind, pop, stats, hof
 
+def qualityFromHqPercent(hqPercent):
+    x = hqPercent
+    qualityPercent = -5.6604E-6 * x**4 + 0.0015369705 * x**3 - 0.1426469573 * x**2 + 5.6122722959 * x - 5.5950384565
+
+    return qualityPercent
+
+def hqPercentFromQuality(qualityPercent):
+
+    hqPercent = 1
+    if qualityPercent == 0:
+        hqPercent = 1
+    elif qualityPercent >= 100:
+        hqPercent = 100
+    else:
+        while qualityFromHqPercent(hqPercent) < qualityPercent and hqPercent < 100:
+            hqPercent += 1
+
+    return hqPercent
+
 def mainGP(mySynth, penaltyWeight, seed=None, initialGuess = None):
     # Do this be able to print the seed used
     if seed is None:
@@ -861,10 +884,11 @@ def mainRecipeWrapper():
     cottonCloth = Recipe(13,27,40,0,726)   # Cotton yarn
     goatskinRing = Recipe(20,74,70,0,1053)   # Goatskin Ring
 
-    mySynth = Synth(myWeaver, cottonCloth, maxTrickUses=2, useConditions=True)
+    mySynth = Synth(myWeaver, cottonCloth, maxTrickUses=0, useConditions=True)
 
     # Call to GP
-    iniGuess = [innerQuiet, steadyHand, wasteNot, hastyTouch, basicTouch, hastyTouch, hastyTouch, steadyHand, wasteNot, hastyTouch, basicTouch, hastyTouch, basicSynth]
+    iniGuess = [innerQuiet, steadyHand, wasteNot, hastyTouch, basicTouch, basicTouch, hastyTouch, steadyHand, wasteNot, hastyTouch, hastyTouch, hastyTouch, basicSynth]
+    #iniGuess = [innerQuiet, tricksOfTheTrade, steadyHand, wasteNot, hastyTouch, basicTouch, basicTouch, basicTouch, tricksOfTheTrade, steadyHand, wasteNot, hastyTouch, basicTouch, hastyTouch, basicSynth]
     best = mainGP(mySynth, penaltyWeight, seed, iniGuess)[0]
     print("\nBest:")
     print(best)
@@ -876,7 +900,7 @@ def mainRecipeWrapper():
     MonteCarloSim(best, mySynth, 500)
 
     print("\nMacro")
-    print(CreateMacro(best, waitTime=3, insertTricks=True))
+    print(CreateMacro(best, waitTime=3, insertTricks=False))
 
 if __name__ == "__main__":
     mainRecipeWrapper()
