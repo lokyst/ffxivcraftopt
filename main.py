@@ -762,7 +762,7 @@ def hqPercentFromQuality(qualityPercent):
 
     return hqPercent
 
-def mainGP(mySynth, penaltyWeight, seed=None, initialGuess = None):
+def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, initialGuess = None):
     # Do this be able to print the seed used
     if seed is None:
         seed = random.randint(0, 19770216)
@@ -829,7 +829,7 @@ def mainGP(mySynth, penaltyWeight, seed=None, initialGuess = None):
     toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut)
 
     # Set up initial guess in primitive form
-    pop = toolbox.population(n=300)
+    pop = toolbox.population(n=population)
     if not initialGuess is None:
         tempList = []
 
@@ -854,7 +854,7 @@ def mainGP(mySynth, penaltyWeight, seed=None, initialGuess = None):
     stats.register("min", min)
     stats.register("max", max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, 200, stats, halloffame=hof)
+    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, generations, stats, halloffame=hof)
 
     # Print Best Individual
     #==============================
@@ -870,8 +870,11 @@ def mainRecipeWrapper():
     #==============================
     # Synth details
     penaltyWeight = 10000
+    population = 300
+    generations = 200
     seqLength = 20
     seed = None
+    monteCarloIterations = 500
     myLeatherWorkerActions = [basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade,
                  rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
     myLeatherWorker = Crafter(25, 136, 137, 252, myLeatherWorkerActions) # Leatherworker
@@ -904,15 +907,15 @@ def mainRecipeWrapper():
     mySynth = Synth(myWeaver, initiatesSlops, maxTrickUses=2, useConditions=True)
 
     # Call to GP
-    best = mainGP(mySynth, penaltyWeight, seed, iniGuess)[0]
+    best = mainGP(mySynth, penaltyWeight, population, generations, seed, iniGuess)[0]
     print("\nBest:")
     print(best)
 
-    print("\nProbablistic")
-    simSynth(best, mySynth, False, True)
+    #print("\nProbablistic")
+    #simSynth(best, mySynth, False, True)
 
     print("\nMonteCarlo")
-    MonteCarloSim(best, mySynth, 500)
+    MonteCarloSim(best, mySynth, monteCarloIterations)
 
     #print("\nMacro")
     #print(CreateMacro(best, waitTime=3, insertTricks=False))
