@@ -163,7 +163,7 @@ class State:
         self.trickOk = trickOk
 
 # Probabalistic Simulation Function
-def simSynth(individual, synth, verbose=True, debug=False):
+def simSynth(individual, synth, verbose=True, debug=False, log=print):
     # State tracking
     durabilityState = synth.recipe.durability
     cpState = synth.crafter.craftPoints
@@ -192,12 +192,12 @@ def simSynth(individual, synth, verbose=True, debug=False):
     trickOk = False
 
     if verbose:
-        print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
-        print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
+        log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
+        log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
 
     if debug:
-        print("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
-        print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
+        log("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
+        log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
 
     for action in individual:
         # Occur regardless of dummy actions
@@ -330,13 +330,13 @@ def simSynth(individual, synth, verbose=True, debug=False):
             cpState = min(cpState, synth.crafter.craftPoints)
 
         if verbose:
-            print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
+            log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
         if debug:
             iqCnt = 0
             if innerQuiet.name in effects.countUps:
                 iqCnt = effects.countUps[innerQuiet.name]
-            print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
+            log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
 
     # Penalise failure outcomes
     if progressState >= synth.recipe.difficulty:
@@ -355,10 +355,10 @@ def simSynth(individual, synth, verbose=True, debug=False):
                        wastedActions, progressOk, cpOk, durabilityOk, trickOk)
 
     if verbose:
-        print("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     if debug:
-        print("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     return finalState
 
@@ -660,6 +660,11 @@ innovation = Action("innovation", "Innovation", cpCost=18, aType='countdown', ac
 greatStrides = Action("greatStrides", "Great Strides", cpCost=32, aType='countdown', activeTurns=3)
 ingenuity = Action("ingenuity", "Ingenuity", cpCost=24, aType="countdown", activeTurns=5)
 ingenuity2 = Action("ingenuity2", "Ingenuity II", cpCost=32, aType="countdown", activeTurns=5)
+
+allActions = {}
+for k, v in globals().items():
+    if isinstance(v, Action):
+        allActions[v.shortName] = v
 
 # Call to GA
 def mainGA(mySynth, penaltyWeight, seqLength, seed=None):
