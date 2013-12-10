@@ -47,11 +47,6 @@ class SimulationHandler(webapp2.RequestHandler):
         finalState = main.simSynth(sequence, synth, log=logger.log)
 
         result = {
-            "durabilityOk": finalState.durabilityOk,
-            "cpOk": finalState.cpOk,
-            "progressOk": finalState.progressOk,
-            "quality": finalState.qualityState,
-            "wastedActions": finalState.wastedActions,
             "log": logger.logText,
         }
 
