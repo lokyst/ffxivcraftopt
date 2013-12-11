@@ -85,6 +85,10 @@ class SolverHandler(BaseHandler):
 
         best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], settings['solver']['seed'], sequence, logger.log)[0]
 
+        logger.log("\nMonte Carlo")
+        logger.log("===========")
+        main.MonteCarloSim(best, synth, log=logger.log)
+
         result = {
             "log": logger.logText,
         }
