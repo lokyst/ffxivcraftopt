@@ -363,7 +363,7 @@ def simSynth(individual, synth, verbose=True, debug=False, log=print):
     return finalState
 
 # MoneCarlo Simulation Function
-def MonteCarloSynth(individual, synth, verbose=True, debug=False):
+def MonteCarloSynth(individual, synth, verbose=True, debug=False, log=print):
     # State tracking
     durabilityState = synth.recipe.durability
     cpState = synth.crafter.craftPoints
@@ -390,12 +390,12 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False):
     trickOk = False
 
     if verbose:
-        print("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
-        print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
+        log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
+        log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
 
     if debug:
-        print("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
-        print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
+        log("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
+        log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
 
     for action in individual:
         # Occur regardless of dummy actions
@@ -547,13 +547,13 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False):
             cpState = min(cpState, synth.crafter.craftPoints)
 
         if verbose:
-            print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
+            log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
         if debug:
             iqCnt = 0
             if innerQuiet.name in effects.countUps:
                 iqCnt = effects.countUps[innerQuiet.name]
-            print("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
+            log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
 
     # Penalise failure outcomes
     if progressState >= synth.recipe.difficulty:
@@ -572,21 +572,21 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False):
                        wastedActions, progressOk, cpOk, durabilityOk, trickOk)
 
     if verbose:
-        print("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     if debug:
-        print("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
+        log("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
 
     return finalState
 
-def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False):
+def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False, log=print):
     finalStateTracker = []
     for i in range(nRuns):
-        runSynth = MonteCarloSynth(individual, synth, False, debug)
+        runSynth = MonteCarloSynth(individual, synth, False, debug, log)
         finalStateTracker.append(runSynth)
 
         if verbose:
-            print("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (i, "MonteCarlo", runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState, runSynth.wastedActions))
+            log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (i, "MonteCarlo", runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState, runSynth.wastedActions))
 
     avgDurability = sum([x.durabilityState for x in finalStateTracker])/nRuns
     avgCp = sum([x.cpState for x in finalStateTracker])/nRuns
@@ -595,8 +595,8 @@ def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False):
     avgQualityPercent = avgQuality/synth.recipe.maxQuality * 100
     avgHqPercent = hqPercentFromQuality(avgQualityPercent)
 
-    print("%2s %-20s %5s %5s %5s %5s %5s" % ("", "", "DUR", "CP", "QUA", "PRG", "HQ%"))
-    print("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress, avgHqPercent))
+    log("%2s %-20s %5s %5s %5s %5s %5s" % ("", "", "DUR", "CP", "QUA", "PRG", "HQ%"))
+    log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress, avgHqPercent))
 
     minDurability = min([x.durabilityState for x in finalStateTracker])
     minCp = min([x.cpState for x in finalStateTracker])
@@ -605,7 +605,7 @@ def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False):
     minQualityPercent = minQuality/synth.recipe.maxQuality * 100
     minHqPercent = hqPercentFromQuality(minQualityPercent)
 
-    print("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress, minHqPercent))
+    log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress, minHqPercent))
 
 def generateInitialGuess(synth, seqLength):
     nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.CalculateBaseProgressIncrease((synth.crafter.level-synth.recipe.level), synth.crafter.craftsmanship)) )
@@ -767,7 +767,7 @@ def hqPercentFromQuality(qualityPercent):
 
     return hqPercent
 
-def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, initialGuess = None):
+def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, initialGuess = None, log=print):
     # Do this be able to print the seed used
     if seed is None:
         seed = random.randint(0, 19770216)
@@ -800,7 +800,7 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
         individual = flatten_prog(individual)
 
         # Simulate synth
-        result = simSynth(individual, mySynth, False)
+        result = simSynth(individual, mySynth, verbose=False, log=log)
 
         # Initialize tracking variables
         penalties = 0
@@ -864,8 +864,8 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
     # Print Best Individual
     #==============================
     best_ind = flatten_prog(tools.selBest(pop, 1)[0])
-    print("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
-    simSynth(best_ind, mySynth)
+    log("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
+    simSynth(best_ind, mySynth, log=log)
 
     return best_ind, pop, hof, stats
 
