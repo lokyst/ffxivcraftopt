@@ -48,12 +48,16 @@ class SimulationHandler(BaseHandler):
         recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'], settings['recipe']['durability'], settings['recipe']['startQuality'], settings['recipe']['maxQuality'])
         synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
         sequence = [main.allActions[a] for a in settings['sequence']]
-        logger = Logger()
 
-        finalState = main.simSynth(sequence, synth, log=logger.log)
+        probabilisticLog = Logger()
+        main.simSynth(sequence, synth, log=probabilisticLog.log)
+
+        monteCarloLogger = Logger()
+        main.MonteCarloSim(sequence, synth, nRuns = settings['simulation']['maxMontecarloRuns'], log=monteCarloLogger.log)
 
         result = {
-            "log": logger.logText,
+            "probabilisticLog": probabilisticLog.logText,
+            "monteCarloLog": monteCarloLogger.logText,
         }
 
         logging.info("result=" + repr(result))
