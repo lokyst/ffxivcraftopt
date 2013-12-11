@@ -37,6 +37,11 @@ class BaseHandler(webapp2.RequestHandler):
         self.response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
         self.response.headers['Content-Type'] = 'application/json'
 
+    def writeHeaders(self):
+        self.response.headers['Content-Type'] = 'application/json'
+        self.response.headers['Access-Control-Allow-Origin'] = '*'
+        self.response.headers['Cache-Control'] = 'max-age=0, no-cache, no-store'
+
 
 class SimulationHandler(BaseHandler):
     def post(self):
@@ -62,9 +67,7 @@ class SimulationHandler(BaseHandler):
 
         logging.info("result=" + repr(result))
 
-        self.response.headers['Content-Type'] = 'application/json'
-        self.response.headers['Access-Control-Allow-Origin'] = '*'
-        self.response.headers['Cache-Control'] = 'max-age=0, no-cache, no-store'
+        self.writeHeaders()
         self.response.write(json.dumps(result))
 
 
@@ -88,9 +91,7 @@ class SolverHandler(BaseHandler):
 
         logging.info("result=" + repr(result))
 
-        self.response.headers['Content-Type'] = 'application/json'
-        self.response.headers['Access-Control-Allow-Origin'] = '*'
-        self.response.headers['Cache-Control'] = 'max-age=0, no-cache, no-store'
+        self.writeHeaders()
         self.response.write(json.dumps(result))
 
 
