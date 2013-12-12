@@ -91,6 +91,7 @@ class SolverHandler(BaseHandler):
 
         result = {
             "log": logger.logText,
+            "bestSequence": [a.shortName for a in best]
         }
 
         logging.info("result=" + repr(result))
