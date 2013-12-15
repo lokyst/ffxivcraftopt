@@ -7,7 +7,7 @@
 # UI
 
 from __future__ import print_function
-import random, math
+import random, math, sys
 from functools import partial
 
 from deap import algorithms
@@ -15,6 +15,18 @@ from deap import base
 from deap import creator
 from deap import tools
 from deap import gp
+
+# ==== Logging
+
+class Logger(object):
+    def __init__(self, out):
+        if out is None:
+            out = sys.stdout
+        self.out = out
+
+    def log(self, s):
+        self.out.write(s)
+        self.out.write("\n")
 
 # ==== GP AST functions
 def progn(*args):
@@ -163,7 +175,9 @@ class State:
         self.trickOk = trickOk
 
 # Probabalistic Simulation Function
-def simSynth(individual, synth, verbose=True, debug=False, log=print):
+def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
+    logger = Logger(logOutput)
+    
     # State tracking
     durabilityState = synth.recipe.durability
     cpState = synth.crafter.craftPoints
@@ -192,12 +206,12 @@ def simSynth(individual, synth, verbose=True, debug=False, log=print):
     trickOk = False
 
     if verbose:
-        log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
-        log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
+        logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
+        logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
 
     if debug:
-        log("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
-        log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
+        logger.log("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
+        logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
 
     for action in individual:
         # Occur regardless of dummy actions
@@ -330,13 +344,13 @@ def simSynth(individual, synth, verbose=True, debug=False, log=print):
             cpState = min(cpState, synth.crafter.craftPoints)
 
         if verbose:
-            log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
+            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
         if debug:
             iqCnt = 0
             if innerQuiet.name in effects.countUps:
                 iqCnt = effects.countUps[innerQuiet.name]
-            log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
+            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
 
     # Penalise failure outcomes
     if progressState >= synth.recipe.difficulty:
@@ -355,15 +369,17 @@ def simSynth(individual, synth, verbose=True, debug=False, log=print):
                        wastedActions, progressOk, cpOk, durabilityOk, trickOk)
 
     if verbose:
-        log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     if debug:
-        log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     return finalState
 
 # MoneCarlo Simulation Function
-def MonteCarloSynth(individual, synth, verbose=True, debug=False, log=print):
+def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None):
+    logger = Logger(logOutput)
+
     # State tracking
     durabilityState = synth.recipe.durability
     cpState = synth.crafter.craftPoints
@@ -390,12 +406,12 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, log=print):
     trickOk = False
 
     if verbose:
-        log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
-        log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
+        logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
+        logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
 
     if debug:
-        log("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
-        log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
+        logger.log("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
+        logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
 
     for action in individual:
         # Occur regardless of dummy actions
@@ -547,13 +563,13 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, log=print):
             cpState = min(cpState, synth.crafter.craftPoints)
 
         if verbose:
-            log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
+            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
         if debug:
             iqCnt = 0
             if innerQuiet.name in effects.countUps:
                 iqCnt = effects.countUps[innerQuiet.name]
-            log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
+            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
 
     # Penalise failure outcomes
     if progressState >= synth.recipe.difficulty:
@@ -572,21 +588,23 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, log=print):
                        wastedActions, progressOk, cpOk, durabilityOk, trickOk)
 
     if verbose:
-        log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
 
     if debug:
-        log("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
 
     return finalState
 
-def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False, log=print):
+def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False, logOutput=None):
+    logger = Logger(logOutput)
+    
     finalStateTracker = []
     for i in range(nRuns):
-        runSynth = MonteCarloSynth(individual, synth, False, debug, log)
+        runSynth = MonteCarloSynth(individual, synth, False, debug, logOutput)
         finalStateTracker.append(runSynth)
 
         if verbose:
-            log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (i, "MonteCarlo", runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState, runSynth.wastedActions))
+            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (i, "MonteCarlo", runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState, runSynth.wastedActions))
 
     avgDurability = sum([x.durabilityState for x in finalStateTracker])/nRuns
     avgCp = sum([x.cpState for x in finalStateTracker])/nRuns
@@ -595,8 +613,8 @@ def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False, log=
     avgQualityPercent = avgQuality/synth.recipe.maxQuality * 100
     avgHqPercent = hqPercentFromQuality(avgQualityPercent)
 
-    log("%2s %-20s %5s %5s %5s %5s %5s" % ("", "", "DUR", "CP", "QUA", "PRG", "HQ%"))
-    log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress, avgHqPercent))
+    logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("", "", "DUR", "CP", "QUA", "PRG", "HQ%"))
+    logger.log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress, avgHqPercent))
 
     minDurability = min([x.durabilityState for x in finalStateTracker])
     minCp = min([x.cpState for x in finalStateTracker])
@@ -605,7 +623,7 @@ def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False, log=
     minQualityPercent = minQuality/synth.recipe.maxQuality * 100
     minHqPercent = hqPercentFromQuality(minQualityPercent)
 
-    log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress, minHqPercent))
+    logger.log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress, minHqPercent))
 
 def generateInitialGuess(synth, seqLength):
     nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.CalculateBaseProgressIncrease((synth.crafter.level-synth.recipe.level), synth.crafter.craftsmanship)) )
@@ -767,7 +785,106 @@ def hqPercentFromQuality(qualityPercent):
 
     return hqPercent
 
-def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, initialGuess = None, log=print):
+def gpEvolution(population, toolbox, cxpb, mutpb, ngen, stats=None,
+             halloffame=None, verbose=False, logOutput=sys.stdout):
+    """This algorithm reproduce the simplest evolutionary algorithm as
+    presented in chapter 7 of [Back2000]_.
+
+    :param population: A list of individuals.
+    :param toolbox: A :class:`~deap.base.Toolbox` that contains the evolution
+                    operators.
+    :param cxpb: The probability of mating two individuals.
+    :param mutpb: The probability of mutating an individual.
+    :param ngen: The number of generation.
+    :param stats: A :class:`~deap.tools.Statistics` object that is updated
+                  inplace, optional.
+    :param halloffame: A :class:`~deap.tools.HallOfFame` object that will
+                       contain the best individuals, optional.
+    :param logOutput: File-like object to which log output should be written
+                      or None for no log output.
+    :returns: The final population.
+
+    It uses :math:`\lambda = \kappa = \mu` and goes as follow.
+    It first initializes the population (:math:`P(0)`) by evaluating
+    every individual presenting an invalid fitness. Then, it enters the
+    evolution loop that begins by the selection of the :math:`P(g+1)`
+    population. Then the crossover operator is applied on a proportion of
+    :math:`P(g+1)` according to the *cxpb* probability, the resulting and the
+    untouched individuals are placed in :math:`P'(g+1)`. Thereafter, a
+    proportion of :math:`P'(g+1)`, determined by *mutpb*, is
+    mutated and placed in :math:`P''(g+1)`, the untouched individuals are
+    transferred :math:`P''(g+1)`. Finally, those new individuals are evaluated
+    and the evolution loop continues until *ngen* generations are completed.
+    Briefly, the operators are applied in the following order ::
+
+        evaluate(population)
+        for i in range(ngen):
+            offspring = select(population)
+            offspring = mate(offspring)
+            offspring = mutate(offspring)
+            evaluate(offspring)
+            population = offspring
+
+    This function expects :meth:`toolbox.mate`, :meth:`toolbox.mutate`,
+    :meth:`toolbox.select` and :meth:`toolbox.evaluate` aliases to be
+    registered in the toolbox.
+
+    .. [Back2000] Back, Fogel and Michalewicz, "Evolutionary Computation 1 :
+       Basic Algorithms and Operators", 2000.
+    """
+    # Evaluate the individuals with an invalid fitness
+    invalid_ind = [ind for ind in population if not ind.fitness.valid]
+    fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+    for ind, fit in zip(invalid_ind, fitnesses):
+        ind.fitness.values = fit
+
+    if halloffame is not None:
+        halloffame.update(population)
+    if stats is not None:
+        stats.update(population)
+    if verbose:
+        column_names = ["gen", "evals"]
+        if stats is not None:
+            column_names += stats.functions.keys()
+        logger = tools.EvolutionLogger(column_names)
+        logger.output = logOutput
+        logger.logHeader()
+        logger.logGeneration(evals=len(population), gen=0, stats=stats)
+
+    # Begin the generational process
+    for gen in range(1, ngen+1):
+        # Select the next generation individuals
+        offspring = toolbox.select(population, len(population))
+
+        # Variate the pool of individuals
+        offspring = algorithms.varAnd(offspring, toolbox, cxpb, mutpb)
+
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+
+        # Update the hall of fame with the generated individuals
+        if halloffame is not None:
+            halloffame.update(offspring)
+
+        # Replace the current population by the offspring
+        population[:] = offspring
+
+        # Update the statistics with the new population
+        if stats is not None:
+            stats.update(population)
+
+        if verbose:
+            logger.logGeneration(evals=len(invalid_ind), gen=gen, stats=stats)
+
+    return population
+
+
+def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, initialGuess = None, verbose=False, logOutput=None):
+    logger = Logger(logOutput)
+
     # Do this be able to print the seed used
     if seed is None:
         seed = random.randint(0, 19770216)
@@ -800,7 +917,7 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
         individual = flatten_prog(individual)
 
         # Simulate synth
-        result = simSynth(individual, mySynth, verbose=False, log=log)
+        result = simSynth(individual, mySynth, verbose=False, logOutput=logOutput)
 
         # Initialize tracking variables
         penalties = 0
@@ -859,13 +976,13 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
     stats.register("min", min)
     stats.register("max", max)
 
-    algorithms.eaSimple(pop, toolbox, 0.5, 0.2, generations, stats, halloffame=hof)
+    gpEvolution(pop, toolbox, 0.5, 0.2, generations, stats, halloffame=hof, verbose=verbose, logOutput=logOutput)
 
     # Print Best Individual
     #==============================
     best_ind = flatten_prog(tools.selBest(pop, 1)[0])
-    log("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
-    simSynth(best_ind, mySynth, log=log)
+    logger.log("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
+    simSynth(best_ind, mySynth, logOutput=logOutput)
 
     return best_ind, pop, hof, stats
 

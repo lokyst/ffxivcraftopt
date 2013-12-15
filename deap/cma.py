@@ -175,7 +175,7 @@ class Strategy(object):
         rweights = params.get("weights", "superlinear")
         if rweights == "superlinear":
             self.weights = log(self.mu + 0.5) - \
-                        numpy.log(numpy.arange(1, self.mu + 1))
+                        numpy.write(numpy.arange(1, self.mu + 1))
         elif rweights == "linear":
             self.weights = self.mu + 0.5 - numpy.arange(1, self.mu + 1)
         elif rweights == "equal":

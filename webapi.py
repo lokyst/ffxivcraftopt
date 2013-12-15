@@ -22,12 +22,12 @@ greetings = [
 ]
 
 
-class Logger:
+class StringLogOutput(object):
     def __init__(self):
         self.logText = ""
 
-    def log(self, s):
-        self.logText = self.logText + s + "\n"
+    def write(self, s):
+        self.logText = self.logText + s
 
 
 class BaseHandler(webapp2.RequestHandler):
@@ -46,7 +46,7 @@ class BaseHandler(webapp2.RequestHandler):
 class SimulationHandler(BaseHandler):
     def post(self):
         settings = json.loads(self.request.body)
-        logging.info("settings=" + repr(settings))
+        logging.debug("settings=" + repr(settings))
 
         crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
         crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'], settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
@@ -54,18 +54,18 @@ class SimulationHandler(BaseHandler):
         synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
         sequence = [main.allActions[a] for a in settings['sequence']]
 
-        probabilisticLog = Logger()
-        main.simSynth(sequence, synth, log=probabilisticLog.log)
+        probabilisticLog = StringLogOutput()
+        main.simSynth(sequence, synth, logOutput=probabilisticLog)
 
-        monteCarloLogger = Logger()
-        main.MonteCarloSim(sequence, synth, nRuns = settings['simulation']['maxMontecarloRuns'], log=monteCarloLogger.log)
+        monteCarloLog = StringLogOutput()
+        main.MonteCarloSim(sequence, synth, nRuns = settings['simulation']['maxMontecarloRuns'], logOutput=monteCarloLog)
 
         result = {
             "probabilisticLog": probabilisticLog.logText,
-            "monteCarloLog": monteCarloLogger.logText,
+            "monteCarloLog": monteCarloLog.logText,
         }
 
-        logging.info("result=" + repr(result))
+        logging.debug("result=" + repr(result))
 
         self.writeHeaders()
         self.response.write(json.dumps(result))
@@ -74,27 +74,27 @@ class SimulationHandler(BaseHandler):
 class SolverHandler(BaseHandler):
     def post(self):
         settings = json.loads(self.request.body)
-        logging.info("settings=" + repr(settings))
+        logging.debug("settings=" + repr(settings))
 
         crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
         crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'], settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
         recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'], settings['recipe']['durability'], settings['recipe']['startQuality'], settings['recipe']['maxQuality'])
         synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
         sequence = [main.allActions[a] for a in settings['sequence']]
-        logger = Logger()
 
-        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], settings['solver']['seed'], sequence, logger.log)[0]
+        log = StringLogOutput()
+        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], settings['solver']['seed'], sequence, logOutput=log)[0]
 
-        logger.log("\nMonte Carlo")
-        logger.log("===========")
-        main.MonteCarloSim(best, synth, log=logger.log)
+        log.write("\nMonte Carlo\n")
+        log.write("===========\n")
+        main.MonteCarloSim(best, synth, logOutput=log)
 
         result = {
-            "log": logger.logText,
+            "log": log.logText,
             "bestSequence": [a.shortName for a in best]
         }
 
-        logging.info("result=" + repr(result))
+        logging.debug("result=" + repr(result))
 
         self.writeHeaders()
         self.response.write(json.dumps(result))
@@ -103,4 +103,4 @@ class SolverHandler(BaseHandler):
 application = webapp2.WSGIApplication([
     ('/simulation', SimulationHandler),
     ('/solver', SolverHandler),
-], debug=True)
+], debug=__debug__)
