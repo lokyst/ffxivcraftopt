@@ -600,6 +600,8 @@ def MonteCarloSim(individual, synth, nRuns=100, seed=None, verbose=False, debug=
         seed = random.randint(0, 19770216)
     random.seed(seed)
 
+    logger = Logger(logOutput)
+
     finalStateTracker = []
     for i in range(nRuns):
         runSynth = MonteCarloSynth(individual, synth, False, debug, logOutput)
