@@ -579,7 +579,11 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False):
 
     return finalState
 
-def MonteCarloSim(individual, synth, nRuns=100, verbose=False, debug=False):
+def MonteCarloSim(individual, synth, nRuns=100, seed=None, verbose=False, debug=False):
+    if seed is None:
+        seed = random.randint(0, 19770216)
+    random.seed(seed)
+
     finalStateTracker = []
     for i in range(nRuns):
         runSynth = MonteCarloSynth(individual, synth, False, debug)
