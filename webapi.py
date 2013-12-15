@@ -58,7 +58,7 @@ class SimulationHandler(BaseHandler):
         main.simSynth(sequence, synth, logOutput=probabilisticLog)
 
         monteCarloLog = StringLogOutput()
-        main.MonteCarloSim(sequence, synth, nRuns = settings['simulation']['maxMontecarloRuns'], logOutput=monteCarloLog)
+        main.MonteCarloSim(sequence, synth, nRuns=settings['maxMontecarloRuns'], seed=settings['seed'], logOutput=monteCarloLog)
 
         result = {
             "probabilisticLog": probabilisticLog.logText,
@@ -83,11 +83,11 @@ class SolverHandler(BaseHandler):
         sequence = [main.allActions[a] for a in settings['sequence']]
 
         log = StringLogOutput()
-        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], settings['solver']['seed'], sequence, logOutput=log)[0]
+        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], settings['seed'], sequence, logOutput=log)[0]
 
         log.write("\nMonte Carlo\n")
         log.write("===========\n")
-        main.MonteCarloSim(best, synth, logOutput=log)
+        main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=settings['seed'], logOutput=log)
 
         result = {
             "log": log.logText,
