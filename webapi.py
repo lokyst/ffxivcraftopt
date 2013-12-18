@@ -53,12 +53,13 @@ class SimulationHandler(BaseHandler):
         recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'], settings['recipe']['durability'], settings['recipe']['startQuality'], settings['recipe']['maxQuality'])
         synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
         sequence = [main.allActions[a] for a in settings['sequence']]
+        seed = settings.get('seed', None)
 
         probabilisticLog = StringLogOutput()
         main.simSynth(sequence, synth, logOutput=probabilisticLog)
 
         monteCarloLog = StringLogOutput()
-        main.MonteCarloSim(sequence, synth, nRuns=settings['maxMontecarloRuns'], seed=settings['seed'], logOutput=monteCarloLog)
+        main.MonteCarloSim(sequence, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=monteCarloLog)
 
         result = {
             "probabilisticLog": probabilisticLog.logText,
@@ -81,13 +82,14 @@ class SolverHandler(BaseHandler):
         recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'], settings['recipe']['durability'], settings['recipe']['startQuality'], settings['recipe']['maxQuality'])
         synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
         sequence = [main.allActions[a] for a in settings['sequence']]
+        seed = settings.get('seed', None)
 
         log = StringLogOutput()
-        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], settings['seed'], sequence, logOutput=log)[0]
+        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], seed, sequence, logOutput=log)[0]
 
         log.write("\nMonte Carlo\n")
         log.write("===========\n")
-        main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=settings['seed'], logOutput=log)
+        main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=log)
 
         result = {
             "log": log.logText,
