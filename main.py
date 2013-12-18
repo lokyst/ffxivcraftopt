@@ -765,7 +765,6 @@ def mainGA(mySynth, penaltyWeight, seqLength, seed=None):
     # Print Best Individual
     #==============================
     best_ind = tools.selBest(pop, 1)[0]
-    print("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
     simSynth(best_ind, mySynth)
 
     return best_ind, pop, stats, hof
@@ -985,7 +984,6 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
     # Print Best Individual
     #==============================
     best_ind = flatten_prog(tools.selBest(pop, 1)[0])
-    logger.log("\nRandom Seed: %i, Use Conditions: %s" % (seed, mySynth.useConditions))
     simSynth(best_ind, mySynth, logOutput=logOutput)
 
     return best_ind, pop, hof, stats

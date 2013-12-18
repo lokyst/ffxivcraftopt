@@ -1,5 +1,6 @@
 """Hello World API.
 """
+import random
 
 __author__ = 'Gordon Tyler <gordon@doxxx.net>'
 
@@ -55,15 +56,23 @@ class SimulationHandler(BaseHandler):
         sequence = [main.allActions[a] for a in settings['sequence']]
         seed = settings.get('seed', None)
 
-        probabilisticLog = StringLogOutput()
-        main.simSynth(sequence, synth, logOutput=probabilisticLog)
+        if seed is None:
+            seed = random.randint(0, 19770216)
 
-        monteCarloLog = StringLogOutput()
-        main.MonteCarloSim(sequence, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=monteCarloLog)
+        logOutput = StringLogOutput()
+        logOutput.write("Seed: %i, Use Conditions: %s\n\n" % (seed, synth.useConditions))
+        logOutput.write("Probabilistic Result\n")
+        logOutput.write("====================\n")
+
+        main.simSynth(sequence, synth, logOutput=logOutput)
+
+        logOutput.write("\nMonte Carlo Result\n")
+        logOutput.write("==================\n")
+
+        main.MonteCarloSim(sequence, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
 
         result = {
-            "probabilisticLog": probabilisticLog.logText,
-            "monteCarloLog": monteCarloLog.logText,
+            "log": logOutput.logText,
         }
 
         logging.debug("result=" + repr(result))
@@ -84,15 +93,24 @@ class SolverHandler(BaseHandler):
         sequence = [main.allActions[a] for a in settings['sequence']]
         seed = settings.get('seed', None)
 
-        log = StringLogOutput()
-        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], seed, sequence, logOutput=log)[0]
+        if seed is None:
+            seed = random.randint(0, 19770216)
 
-        log.write("\nMonte Carlo\n")
-        log.write("===========\n")
-        main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=log)
+        logOutput = StringLogOutput()
+        logOutput.write("Seed: %i, Use Conditions: %s\n\n" % (seed, synth.useConditions))
+
+        logOutput.write("Genetic Program Result\n")
+        logOutput.write("======================\n")
+
+        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], seed, sequence, logOutput=logOutput)[0]
+
+        logOutput.write("\nMonte Carlo Result\n")
+        logOutput.write("==================\n")
+
+        main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
 
         result = {
-            "log": log.logText,
+            "log": logOutput.logText,
             "bestSequence": [a.shortName for a in best]
         }
 
