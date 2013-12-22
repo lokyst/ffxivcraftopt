@@ -71,7 +71,17 @@ class SimulationHandler(BaseHandler):
             logOutput.write("Probabilistic Result\n")
             logOutput.write("====================\n")
 
-            main.simSynth(sequence, synth, logOutput=logOutput)
+            finalState = main.simSynth(sequence, synth, logOutput=logOutput)
+
+            result["finalState"] = {
+                "durability": finalState.durabilityState,
+                "durabilityOk": finalState.durabilityOk,
+                "cp": finalState.cpState,
+                "cpOk": finalState.cpOk,
+                "progress": finalState.progressState,
+                "progressOk": finalState.progressOk,
+                "quality": finalState.qualityState,
+            }
 
             logOutput.write("\nMonte Carlo Result\n")
             logOutput.write("==================\n")
