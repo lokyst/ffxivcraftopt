@@ -1,9 +1,10 @@
-"""Hello World API.
+"""Solver Web Service.
 """
+
 import random
 
-__author__ = 'Gordon Tyler <gordon@doxxx.net>'
 
+__author__ = 'Gordon Tyler <gordon@doxxx.net>'
 
 import webapp2
 import logging
@@ -49,31 +50,38 @@ class SimulationHandler(BaseHandler):
         settings = json.loads(self.request.body)
         logging.debug("settings=" + repr(settings))
 
-        crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
-        crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'], settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
-        recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'], settings['recipe']['durability'], settings['recipe']['startQuality'], settings['recipe']['maxQuality'])
-        synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
-        sequence = [main.allActions[a] for a in settings['sequence']]
-        seed = settings.get('seed', None)
-
-        if seed is None:
-            seed = random.randint(0, 19770216)
-
+        result = {}
         logOutput = StringLogOutput()
-        logOutput.write("Seed: %i, Use Conditions: %s\n\n" % (seed, synth.useConditions))
-        logOutput.write("Probabilistic Result\n")
-        logOutput.write("====================\n")
 
-        main.simSynth(sequence, synth, logOutput=logOutput)
+        try:
+            crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
+            crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'],
+                                   settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
+            recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'],
+                                 settings['recipe']['durability'], settings['recipe']['startQuality'],
+                                 settings['recipe']['maxQuality'])
+            synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
+            sequence = [main.allActions[a] for a in settings['sequence']]
+            seed = settings.get('seed', None)
 
-        logOutput.write("\nMonte Carlo Result\n")
-        logOutput.write("==================\n")
+            if seed is None:
+                seed = random.randint(0, 19770216)
 
-        main.MonteCarloSim(sequence, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
+            logOutput.write("Seed: %i, Use Conditions: %s\n\n" % (seed, synth.useConditions))
+            logOutput.write("Probabilistic Result\n")
+            logOutput.write("====================\n")
 
-        result = {
-            "log": logOutput.logText,
-        }
+            main.simSynth(sequence, synth, logOutput=logOutput)
+
+            logOutput.write("\nMonte Carlo Result\n")
+            logOutput.write("==================\n")
+
+            main.MonteCarloSim(sequence, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
+        except Exception as e:
+            result["error"] = str(e)
+            logging.exception(e)
+
+        result["log"] = logOutput.logText
 
         logging.debug("result=" + repr(result))
 
@@ -86,33 +94,46 @@ class SolverHandler(BaseHandler):
         settings = json.loads(self.request.body)
         logging.debug("settings=" + repr(settings))
 
-        crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
-        crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'], settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
-        recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'], settings['recipe']['durability'], settings['recipe']['startQuality'], settings['recipe']['maxQuality'])
-        synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
-        sequence = [main.allActions[a] for a in settings['sequence']]
-        seed = settings.get('seed', None)
-
-        if seed is None:
-            seed = random.randint(0, 19770216)
-
+        result = {}
         logOutput = StringLogOutput()
-        logOutput.write("Seed: %i, Use Conditions: %s\n\n" % (seed, synth.useConditions))
 
-        logOutput.write("Genetic Program Result\n")
-        logOutput.write("======================\n")
+        try:
+            crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
+            crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'],
+                                   settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
+            recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'],
+                                 settings['recipe']['durability'], settings['recipe']['startQuality'],
+                                 settings['recipe']['maxQuality'])
+            synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
+            sequence = [main.allActions[a] for a in settings['sequence']]
+            seed = settings.get('seed', None)
 
-        best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'], settings['solver']['generations'], seed, sequence, logOutput=logOutput)[0]
+            if seed is None:
+                seed = random.randint(0, 19770216)
 
-        logOutput.write("\nMonte Carlo Result\n")
-        logOutput.write("==================\n")
+            logOutput.write("Seed: %i, Use Conditions: %s\n\n" % (seed, synth.useConditions))
 
-        main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
+            logOutput.write("Genetic Program Result\n")
+            logOutput.write("======================\n")
 
-        result = {
-            "log": logOutput.logText,
-            "bestSequence": [a.shortName for a in best]
-        }
+            best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'],
+                               settings['solver']['generations'], seed, sequence, logOutput=logOutput)[0]
+
+            logOutput.write("\nMonte Carlo Result\n")
+            logOutput.write("==================\n")
+
+            main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
+
+            result = {
+                "log": logOutput.logText,
+                "bestSequence": [a.shortName for a in best]
+            }
+
+        except Exception as e:
+            result["error"] = str(e)
+            logging.exception(e)
+
+        result["log"] = logOutput.logText
 
         logging.debug("result=" + repr(result))
 
