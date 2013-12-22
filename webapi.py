@@ -80,6 +80,7 @@ class SimulationHandler(BaseHandler):
         except Exception as e:
             result["error"] = str(e)
             logging.exception(e)
+            self.response.status = 500
 
         result["log"] = logOutput.logText
 
@@ -132,6 +133,7 @@ class SolverHandler(BaseHandler):
         except Exception as e:
             result["error"] = str(e)
             logging.exception(e)
+            self.response.status = 500
 
         result["log"] = logOutput.logText
 
