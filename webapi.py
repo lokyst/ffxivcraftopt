@@ -211,7 +211,7 @@ class SolverAsyncHandler(BaseHandler):
         task = AsyncSolverTask()
         taskKey = task.put()
         taskID = taskKey.urlsafe()
-        deferred.defer(runSolverAsync, taskKey.urlsafe(), settings, _queue="solver")
+        deferred.defer(runSolverAsync, taskKey.urlsafe(), settings, _queue="solverqueue", _target="solverbackend")
 
         result = {
             "taskID": taskID
