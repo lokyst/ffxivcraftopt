@@ -127,18 +127,24 @@ class SolverHandler(BaseHandler):
             logOutput.write("Genetic Program Result\n")
             logOutput.write("======================\n")
 
-            best = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'],
-                               settings['solver']['generations'], seed, sequence, logOutput=logOutput)[0]
+            best, finalState, _, _, _ = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'],
+                                           settings['solver']['generations'], seed, sequence, logOutput=logOutput)
 
             logOutput.write("\nMonte Carlo Result\n")
             logOutput.write("==================\n")
 
             main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
 
-            result = {
-                "log": logOutput.logText,
-                "bestSequence": [a.shortName for a in best]
+            result["finalState"] = {
+                "durability": finalState.durabilityState,
+                "durabilityOk": finalState.durabilityOk,
+                "cp": finalState.cpState,
+                "cpOk": finalState.cpOk,
+                "progress": finalState.progressState,
+                "progressOk": finalState.progressOk,
+                "quality": finalState.qualityState,
             }
+            result["bestSequence"] = [a.shortName for a in best]
 
         except Exception as e:
             result["error"] = str(e)

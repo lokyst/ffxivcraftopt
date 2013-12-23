@@ -177,7 +177,7 @@ class State:
 # Probabalistic Simulation Function
 def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
     logger = Logger(logOutput)
-    
+
     # State tracking
     durabilityState = synth.recipe.durability
     cpState = synth.crafter.craftPoints
@@ -984,9 +984,9 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
     # Print Best Individual
     #==============================
     best_ind = flatten_prog(tools.selBest(pop, 1)[0])
-    simSynth(best_ind, mySynth, logOutput=logOutput)
+    finalState = simSynth(best_ind, mySynth, logOutput=logOutput)
 
-    return best_ind, pop, hof, stats
+    return best_ind, finalState, pop, hof, stats
 
 
 def mainRecipeWrapper():
