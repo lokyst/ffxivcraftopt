@@ -11,6 +11,9 @@ import logging
 import json
 import main
 
+from google.appengine.ext import deferred
+from google.appengine.ext import ndb
+
 
 greetings = [
     {
@@ -30,6 +33,60 @@ class StringLogOutput(object):
 
     def write(self, s):
         self.logText = self.logText + s
+
+
+def runSolver(settings):
+    logging.debug("runSolver: settings=" + repr(settings))
+
+    result = {}
+    logOutput = StringLogOutput()
+
+    try:
+        crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
+        crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'],
+                               settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
+        recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'],
+                             settings['recipe']['durability'], settings['recipe']['startQuality'],
+                             settings['recipe']['maxQuality'])
+        synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
+        sequence = [main.allActions[a] for a in settings['sequence']]
+        seed = settings.get('seed', None)
+
+        if seed is None:
+            seed = random.randint(0, 19770216)
+
+        logOutput.write("Seed: %i, Use Conditions: %s\n\n" % (seed, synth.useConditions))
+
+        logOutput.write("Genetic Program Result\n")
+        logOutput.write("======================\n")
+
+        best, finalState, _, _, _ = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'],
+                                       settings['solver']['generations'], seed, sequence, logOutput=logOutput)
+
+        logOutput.write("\nMonte Carlo Result\n")
+        logOutput.write("==================\n")
+
+        main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
+
+        result["finalState"] = {
+            "durability": finalState.durabilityState,
+            "durabilityOk": finalState.durabilityOk,
+            "cp": finalState.cpState,
+            "cpOk": finalState.cpOk,
+            "progress": finalState.progressState,
+            "progressOk": finalState.progressOk,
+            "quality": finalState.qualityState,
+        }
+        result["bestSequence"] = [a.shortName for a in best]
+    except Exception as e:
+        result["error"] = str(e)
+        logging.exception(e)
+
+    result["log"] = logOutput.logText
+
+    logging.debug("runSolver: result=" + repr(result))
+
+    return result
 
 
 class BaseHandler(webapp2.RequestHandler):
@@ -105,55 +162,62 @@ class SolverHandler(BaseHandler):
         settings = json.loads(self.request.body)
         logging.debug("settings=" + repr(settings))
 
-        result = {}
-        logOutput = StringLogOutput()
+        result = runSolver(settings)
 
-        try:
-            crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
-            crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'],
-                                   settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
-            recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'],
-                                 settings['recipe']['durability'], settings['recipe']['startQuality'],
-                                 settings['recipe']['maxQuality'])
-            synth = main.Synth(crafter, recipe, settings['maxTricksUses'], True)
-            sequence = [main.allActions[a] for a in settings['sequence']]
-            seed = settings.get('seed', None)
-
-            if seed is None:
-                seed = random.randint(0, 19770216)
-
-            logOutput.write("Seed: %i, Use Conditions: %s\n\n" % (seed, synth.useConditions))
-
-            logOutput.write("Genetic Program Result\n")
-            logOutput.write("======================\n")
-
-            best, finalState, _, _, _ = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'],
-                                           settings['solver']['generations'], seed, sequence, logOutput=logOutput)
-
-            logOutput.write("\nMonte Carlo Result\n")
-            logOutput.write("==================\n")
-
-            main.MonteCarloSim(best, synth, nRuns=settings['maxMontecarloRuns'], seed=seed, logOutput=logOutput)
-
-            result["finalState"] = {
-                "durability": finalState.durabilityState,
-                "durabilityOk": finalState.durabilityOk,
-                "cp": finalState.cpState,
-                "cpOk": finalState.cpOk,
-                "progress": finalState.progressState,
-                "progressOk": finalState.progressOk,
-                "quality": finalState.qualityState,
-            }
-            result["bestSequence"] = [a.shortName for a in best]
-
-        except Exception as e:
-            result["error"] = str(e)
-            logging.exception(e)
+        if result.has_key("error"):
             self.response.status = 500
 
-        result["log"] = logOutput.logText
+        self.writeHeaders()
+        self.response.write(json.dumps(result))
 
-        logging.debug("result=" + repr(result))
+
+class AsyncSolverTask(ndb.Model):
+    done = ndb.BooleanProperty()
+    result = ndb.JsonProperty()
+
+
+def runSolverAsync(taskID, settings):
+    result = runSolver(settings)
+    taskKey = ndb.Key(urlsafe=taskID)
+    task = taskKey.get()
+    task.done = True
+    task.result = result
+    task.put()
+
+
+class SolverAsyncHandler(BaseHandler):
+    def get(self):
+        taskID = self.request.get("taskID")
+        taskKey = ndb.Key(urlsafe=taskID)
+
+        task = taskKey.get()
+        if task.done:
+            result = {
+                "done": True,
+                "result": task.result
+            }
+            taskKey.delete()
+        else:
+            result = { "done": False }
+
+        logging.debug("SolverAsyncHandler.get: result=" + repr(result))
+
+        self.writeHeaders()
+        self.response.write(json.dumps(result))
+
+    def post(self):
+        settings = json.loads(self.request.body)
+
+        task = AsyncSolverTask()
+        taskKey = task.put()
+        taskID = taskKey.urlsafe()
+        deferred.defer(runSolverAsync, taskKey.urlsafe(), settings, _queue="solver")
+
+        result = {
+            "taskID": taskID
+        }
+
+        logging.debug("SolverAsyncHandler.post: result=" + repr(result))
 
         self.writeHeaders()
         self.response.write(json.dumps(result))
@@ -162,4 +226,5 @@ class SolverHandler(BaseHandler):
 application = webapp2.WSGIApplication([
     ('/simulation', SimulationHandler),
     ('/solver', SolverHandler),
+    ('/async_solver', SolverAsyncHandler),
 ], debug=__debug__)

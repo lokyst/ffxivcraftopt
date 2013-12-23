@@ -4,6 +4,9 @@ runtime: python27
 threadsafe: true
 api_version: 1
 
+builtins:
+- deferred: on
+
 handlers:
 - url: /.*
   script: webapi.application
