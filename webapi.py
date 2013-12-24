@@ -172,14 +172,15 @@ class SolverHandler(BaseHandler):
 
 
 class AsyncSolverTask(ndb.Model):
+    settings = ndb.JsonProperty()
     done = ndb.BooleanProperty()
     result = ndb.JsonProperty()
 
 
-def runSolverAsync(taskID, settings):
-    result = runSolver(settings)
+def runSolverAsync(taskID):
     taskKey = ndb.Key(urlsafe=taskID)
     task = taskKey.get()
+    result = runSolver(task.settings)
     task.done = True
     task.result = result
     task.put()
@@ -208,10 +209,10 @@ class SolverAsyncHandler(BaseHandler):
     def post(self):
         settings = json.loads(self.request.body)
 
-        task = AsyncSolverTask()
+        task = AsyncSolverTask(settings=settings)
         taskKey = task.put()
         taskID = taskKey.urlsafe()
-        deferred.defer(runSolverAsync, taskKey.urlsafe(), settings, _queue="solverqueue", _target="solverbackend")
+        deferred.defer(runSolverAsync, taskKey.urlsafe(), _queue="solverqueue", _target="solverbackend")
 
         result = {
             "taskID": taskID
