@@ -899,7 +899,7 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
         pset.addTerminal(action)
 
     # Set up a maximization problem
-    creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+    creator.create("FitnessMax", base.Fitness, weights=(1.0, 0.1))
     creator.create("Individual", gp.PrimitiveTree, fitness=creator.FitnessMax, pset=pset)
 
     toolbox = base.Toolbox()
@@ -922,6 +922,7 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
         # Initialize tracking variables
         penalties = 0
         fitness = 0
+        fitnessProg = 0
 
         # Sum the constraint violations
         penalties += result.wastedActions
@@ -940,8 +941,9 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
 
         fitness += result.qualityState
         fitness -= penaltyWeight * penalties
+        fitnessProg += result.progressState
 
-        return fitness,
+        return fitness, fitnessProg
 
     # more GP setup
     toolbox.register("evaluate", evalSim)
