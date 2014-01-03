@@ -102,10 +102,7 @@ class Synth:
         elif 5 < levelDifference <= 15:
             levelCorrectionFactor = 0.022 * levelDifference + 0.15
         else:
-            levelCorrectionFactor = 0.022 * levelDifference + 0.15
-        # Failed data points
-        # Ldiff, Craftsmanship, Actual Progress, Expected Progress
-        # 15, 136, 44, 45
+            levelCorrectionFactor = 0.0033 * levelDifference + 0.43
 
         baseProgress = 0.21 * craftsmanship + 1.6
         levelCorrectedProgress = baseProgress * (1 + levelCorrectionFactor)
