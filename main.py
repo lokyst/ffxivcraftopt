@@ -983,7 +983,7 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
 
     # Print Best Individual
     #==============================
-    best_ind = flatten_prog(tools.selBest(pop, 1)[0])
+    best_ind = flatten_prog(hof[0])
     finalState = simSynth(best_ind, mySynth, logOutput=logOutput)
 
     return best_ind, finalState, pop, hof, stats
