@@ -786,7 +786,7 @@ def hqPercentFromQuality(qualityPercent):
     return hqPercent
 
 def gpEvolution(population, toolbox, cxpb, mutpb, ngen, stats=None,
-             halloffame=None, verbose=False, logOutput=sys.stdout):
+             halloffame=None, verbose=False, logOutput=sys.stdout, progressFeedback=None):
     """This algorithm reproduce the simplest evolutionary algorithm as
     presented in chapter 7 of [Back2000]_.
 
@@ -879,10 +879,13 @@ def gpEvolution(population, toolbox, cxpb, mutpb, ngen, stats=None,
         if verbose:
             logger.logGeneration(evals=len(invalid_ind), gen=gen, stats=stats)
 
+        if progressFeedback:
+            progressFeedback(gen)
+
     return population
 
 
-def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, initialGuess = None, verbose=False, logOutput=None):
+def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, initialGuess = None, verbose=False, logOutput=None, progressFeedback=None):
     logger = Logger(logOutput)
 
     # Do this be able to print the seed used
@@ -978,7 +981,7 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
     stats.register("min", min)
     stats.register("max", max)
 
-    gpEvolution(pop, toolbox, 0.5, 0.2, generations, stats, halloffame=hof, verbose=verbose, logOutput=logOutput)
+    gpEvolution(pop, toolbox, 0.5, 0.2, generations, stats, halloffame=hof, verbose=verbose, logOutput=logOutput, progressFeedback=progressFeedback)
 
     # Print Best Individual
     #==============================

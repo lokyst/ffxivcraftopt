@@ -35,7 +35,7 @@ class StringLogOutput(object):
         self.logText = self.logText + s
 
 
-def runSolver(settings):
+def runSolver(settings, progressFeedback=None):
     logging.debug("runSolver: settings=" + repr(settings))
 
     result = {}
@@ -61,7 +61,7 @@ def runSolver(settings):
         logOutput.write("======================\n")
 
         best, finalState, _, _, _ = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'],
-                                       settings['solver']['generations'], seed, sequence, logOutput=logOutput)
+                                       settings['solver']['generations'], seed, sequence, logOutput=logOutput, progressFeedback=progressFeedback)
 
         logOutput.write("\nMonte Carlo Result\n")
         logOutput.write("==================\n")
@@ -173,6 +173,7 @@ class SolverHandler(BaseHandler):
 
 class AsyncSolverTask(ndb.Model):
     settings = ndb.JsonProperty()
+    generationsCompleted = ndb.IntegerProperty()
     done = ndb.BooleanProperty()
     result = ndb.JsonProperty()
 
@@ -180,7 +181,12 @@ class AsyncSolverTask(ndb.Model):
 def runSolverAsync(taskID):
     taskKey = ndb.Key(urlsafe=taskID)
     task = taskKey.get()
-    result = runSolver(task.settings)
+
+    def updateProgress(generationsCompleted):
+        task.generationsCompleted = generationsCompleted
+        task.put()
+
+    result = runSolver(task.settings, progressFeedback=updateProgress)
     task.done = True
     task.result = result
     task.put()
@@ -192,14 +198,22 @@ class SolverAsyncHandler(BaseHandler):
         taskKey = ndb.Key(urlsafe=taskID)
 
         task = taskKey.get()
-        if task.done:
+
+        if task:
             result = {
-                "done": True,
+                "generationsCompleted": task.generationsCompleted,
+                "done": task.done,
                 "result": task.result
             }
-            taskKey.delete()
+            if task.done:
+                taskKey.delete()
         else:
-            result = { "done": False }
+            self.response.status = 500
+            result = {
+                "result": {
+                    "error": "Unknown task: %s" % (taskID,)
+                }
+            }
 
         logging.debug("SolverAsyncHandler.get: result=" + repr(result))
 
