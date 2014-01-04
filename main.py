@@ -210,6 +210,10 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
     durabilityOk = False
     trickOk = False
 
+    if not individual:
+        return State(stepCount, "", durabilityState, cpState, qualityState, progressState,
+                           wastedActions, progressOk, cpOk, durabilityOk, trickOk, crossClassActionList)
+
     if verbose:
         logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
         logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
@@ -414,6 +418,10 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
     cpOk = False
     durabilityOk = False
     trickOk = False
+
+    if not individual:
+        return State(stepCount, "", durabilityState, cpState, qualityState, progressState,
+                           wastedActions, progressOk, cpOk, durabilityOk, trickOk, crossClassActionList)
 
     if verbose:
         logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
@@ -913,6 +921,9 @@ def gpEvolution(population, toolbox, cxpb, mutpb, ngen, stats=None,
 
 def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, initialGuess = None, verbose=False, logOutput=None, progressFeedback=None):
     logger = Logger(logOutput)
+
+    if not initialGuess:
+        initialGuess = None
 
     # Do this be able to print the seed used
     if seed is None:
