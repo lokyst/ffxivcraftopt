@@ -161,7 +161,7 @@ class EffectTracker:
         self.toggles = {}
 
 class State:
-    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False, trickOk=False):
+    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False, trickOk=False, crossClassActionList=[]):
         self.step = step
         self.action = action
         self.durabilityState = durabilityState
@@ -173,6 +173,7 @@ class State:
         self.cpOk = cpOk
         self.durabilityOk = durabilityOk
         self.trickOk = trickOk
+        self.crossClassActionList = crossClassActionList
 
 # Probabalistic Simulation Function
 def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
@@ -187,6 +188,7 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
     wastedActions = 0
     effects = EffectTracker()
     trickUses = 0
+    crossClassActionList = []
 
     # Conditions
     pGood = 0.23
@@ -343,6 +345,10 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
             durabilityState = min(durabilityState, synth.recipe.durability)
             cpState = min(cpState, synth.crafter.craftPoints)
 
+            # Count cross class actions
+            if not ((action.cls == "All") or (action.cls == synth.crafter.cls) or (action in crossClassActionList)):
+                crossClassActionList.append(action)
+
         if verbose:
             logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
@@ -366,10 +372,10 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
         trickOk = True
 
     finalState = State(stepCount, individual[-1].name, durabilityState, cpState, qualityState, progressState,
-                       wastedActions, progressOk, cpOk, durabilityOk, trickOk)
+                       wastedActions, progressOk, cpOk, durabilityOk, trickOk, crossClassActionList)
 
     if verbose:
-        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s, Cross Class Skills: %i" % (progressOk, durabilityOk, cpOk, trickOk, len(crossClassActionList)))
 
     if debug:
         logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
@@ -390,6 +396,7 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
     effects = EffectTracker()
     maxTricksUses = synth.maxTrickUses
     trickUses = 0
+    crossClassActionList = []
     condition = "Normal"
 
     # Strip Tricks of the Trade
@@ -562,6 +569,10 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
             durabilityState = min(durabilityState, synth.recipe.durability)
             cpState = min(cpState, synth.crafter.craftPoints)
 
+            # Count cross class actions
+            if not ((action.cls == "All") or (action.cls == synth.crafter.cls) or (action in crossClassActionList)):
+                crossClassActionList.append(action)
+
         if verbose:
             logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
@@ -585,10 +596,10 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
         trickOk = True
 
     finalState = State(stepCount, individual[-1].name, durabilityState, cpState, qualityState, progressState,
-                       wastedActions, progressOk, cpOk, durabilityOk, trickOk)
+                       wastedActions, progressOk, cpOk, durabilityOk, trickOk, crossClassActionList)
 
     if verbose:
-        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s, Cross Class Skills: %i" % (progressOk, durabilityOk, cpOk, trickOk, len(crossClassActionList)))
 
     if debug:
         logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
@@ -645,6 +656,15 @@ def generateInitialGuess(synth, seqLength):
     myGuess[4] = hastyTouch
 
     return myGuess
+
+def maxCrossClassActions(level):
+    maxActions = 1          # level 1
+
+    if level >= 10:
+        maxActions += 1     # level 10
+        maxActions += (level - 10)//5
+
+    return maxActions
 
 # Define Actions
 #======================================
@@ -929,6 +949,7 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
         penalties = 0
         fitness = 0
         fitnessProg = 0
+        maxCrossClassActionsExceeded = 0
 
         # Sum the constraint violations
         penalties += result.wastedActions
@@ -944,6 +965,10 @@ def mainGP(mySynth, penaltyWeight, population=300, generations=100, seed=None, i
 
         if not result.trickOk:
             penalties += 1
+
+        maxCrossClassActionsExceeded = len(result.crossClassActionList) - maxCrossClassActions(mySynth.crafter.level)
+        if maxCrossClassActionsExceeded > 0:
+            penalties += maxCrossClassActionsExceeded
 
         fitness += result.qualityState
         fitness -= penaltyWeight * penalties
@@ -1036,7 +1061,7 @@ def mainRecipeWrapper():
     mySynth = Synth(myWeaver, initiatesSlops, maxTrickUses=2, useConditions=True)
 
     # Call to GP
-    best = mainGP(mySynth, penaltyWeight, population, generations, seed, iniGuess)[0]
+    best = mainGP(mySynth, penaltyWeight, population, generations, seed, iniGuess, logOutput=sys.stdout)[0]
     print("\nBest:")
     print(best)
 
