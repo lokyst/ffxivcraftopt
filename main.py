@@ -68,7 +68,8 @@ def CreateMacro(actionList, waitTime=3, insertTricks=False):
 
 # ==== Model Stuff
 class Crafter:
-    def __init__(self, level=0, craftsmanship=0, control=0, craftPoints=0, actions=None):
+    def __init__(self, cls="", level=0, craftsmanship=0, control=0, craftPoints=0, actions=None):
+        self.cls = cls
         self.craftsmanship = craftsmanship
         self.control = control
         self.craftPoints = craftPoints
@@ -121,7 +122,7 @@ class Synth:
         return round(levelCorrectedQuality, 0)
 
 class Action:
-    def __init__(self, shortName, name, durabilityCost=0, cpCost=0, successProbability=1.0, qualityIncreaseMultiplier=0.0, progressIncreaseMultiplier=0.0, aType='immediate', activeTurns=1):
+    def __init__(self, shortName, name, durabilityCost=0, cpCost=0, successProbability=1.0, qualityIncreaseMultiplier=0.0, progressIncreaseMultiplier=0.0, aType='immediate', activeTurns=1, cls="All", level=1):
         self.shortName = shortName
         self.name = name
         self.durabilityCost = durabilityCost
@@ -132,6 +133,8 @@ class Action:
         self.type = aType
         if aType != "immediate":
             self.activeTurns = activeTurns      # Save some space
+        self.cls = cls
+        self.level = level
 
     def __eq__(self, other):
         if self.name == other.name:
@@ -645,40 +648,40 @@ def generateInitialGuess(synth, seqLength):
 
 # Define Actions
 #======================================
-dummyAction = Action("dummyAction", "______________")
-observe = Action("observe", "Observe", cpCost=14)
+dummyAction = Action("dummyAction", "______________", cls="All", level=1)
+observe = Action("observe", "Observe", cpCost=14, cls="All", level=13)
 
-basicSynth = Action("basicSynth", "Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1)
-standardSynthesis = Action("standardSynthesis", "Standard Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1.5)
-carefulSynthesis = Action("carefulSynthesis", "Careful Synthesis", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=0.9)
-carefulSynthesis2 = Action("carefulSynthesis2", "Careful Synthesis II", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=1.2)
-brandSynthesis = Action("brandSynthesis", "Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2)
-rapidSynthesis = Action("rapidSynthesis", "Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5)
-flawlessSynthesis = Action("flawlessSynthesis", "Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
-pieceByPiece = Action("pieceByPiece", "Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1)
+basicSynth = Action("basicSynth", "Basic Synthesis", durabilityCost=10, successProbability=0.9, progressIncreaseMultiplier=1, cls="All", level=1)
+standardSynthesis = Action("standardSynthesis", "Standard Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1.5, cls="All", level=31)
+carefulSynthesis = Action("carefulSynthesis", "Careful Synthesis", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=0.9, cls="Weaver", level=15)
+carefulSynthesis2 = Action("carefulSynthesis2", "Careful Synthesis II", durabilityCost=10, successProbability=1, progressIncreaseMultiplier=1.2, cls="Weaver", level=50)
+#brandSynthesis = Action("brandSynthesis", "Brand Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=2, cls="Leatherworker", level=37)
+rapidSynthesis = Action("rapidSynthesis", "Rapid Synthesis", durabilityCost=10, cpCost=0, successProbability=0.5, progressIncreaseMultiplier=2.5, cls="Armorer", level=15)
+flawlessSynthesis = Action("flawlessSynthesis", "Flawless Synthesis", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1, cls="Goldsmith", level=37)
+pieceByPiece = Action("pieceByPiece", "Piece By Piece", durabilityCost=10, cpCost=15, successProbability=0.9, progressIncreaseMultiplier=1, cls="Armorer", level=50)
 
-basicTouch = Action("basicTouch", "Basic Touch", durabilityCost=10, cpCost=18, successProbability=0.7, qualityIncreaseMultiplier=1)
-standardTouch = Action("standardTouch", "Standard Touch", durabilityCost=10, cpCost=32, successProbability=0.8, qualityIncreaseMultiplier=1.25)
-advancedTouch = Action("advancedTouch", "Advanced Touch", durabilityCost=10, cpCost=48, successProbability=0.9, qualityIncreaseMultiplier=1.5)
-hastyTouch = Action("hastyTouch", "Hasty Touch", durabilityCost=10, cpCost=0, successProbability=0.5, qualityIncreaseMultiplier=1)
-byregotsBlessing = Action("byregotsBlessing", "Byregot's Blessing", durabilityCost=10, cpCost=24, successProbability=0.9, qualityIncreaseMultiplier=1)
+basicTouch = Action("basicTouch", "Basic Touch", durabilityCost=10, cpCost=18, successProbability=0.7, qualityIncreaseMultiplier=1, cls="All", level=5)
+standardTouch = Action("standardTouch", "Standard Touch", durabilityCost=10, cpCost=32, successProbability=0.8, qualityIncreaseMultiplier=1.25, cls="All", level=18)
+advancedTouch = Action("advancedTouch", "Advanced Touch", durabilityCost=10, cpCost=48, successProbability=0.9, qualityIncreaseMultiplier=1.5, cls="All", level=43)
+hastyTouch = Action("hastyTouch", "Hasty Touch", durabilityCost=10, cpCost=0, successProbability=0.5, qualityIncreaseMultiplier=1, cls="Culinarian", level=15)
+byregotsBlessing = Action("byregotsBlessing", "Byregot's Blessing", durabilityCost=10, cpCost=24, successProbability=0.9, qualityIncreaseMultiplier=1, cls="Carpenter", level=50)
 
-mastersMend = Action("mastersMend", "Master's Mend", cpCost=92)
-mastersMend2 = Action("mastersMend2", "Master's Mend II", cpCost=160)
-rumination = Action("rumination", "Rumination")
-tricksOfTheTrade = Action("tricksOfTheTrade", "Tricks Of The Trade")
+mastersMend = Action("mastersMend", "Master's Mend", cpCost=92, cls="All", level=7)
+mastersMend2 = Action("mastersMend2", "Master's Mend II", cpCost=160, cls="All", level=25)
+rumination = Action("rumination", "Rumination", cls="Carpenter", level=15)
+tricksOfTheTrade = Action("tricksOfTheTrade", "Tricks Of The Trade", cls="Alchemist", level=15)
 
-innerQuiet = Action("innerQuiet", "Inner Quiet", cpCost=18, aType="countup")
-manipulation = Action("manipulation", "Manipulation", cpCost=88, aType='countdown', activeTurns=3)
-comfortZone = Action("comfortZone", "Comfort Zone", cpCost=66, aType='countdown', activeTurns=10)
-steadyHand = Action("steadyHand", "Steady Hand", cpCost=22, aType='countdown', activeTurns=5)
-steadyHand2 = Action("steadyHand2", "Steady Hand II", cpCost=25, aType='countdown', activeTurns=5)
-wasteNot = Action("wasteNot", "Waste Not", cpCost=56, aType='countdown', activeTurns=4)
-wasteNot2 = Action("wasteNot2", "Waste Not II", cpCost=98, aType='countdown', activeTurns=8)
-innovation = Action("innovation", "Innovation", cpCost=18, aType='countdown', activeTurns=3)
-greatStrides = Action("greatStrides", "Great Strides", cpCost=32, aType='countdown', activeTurns=3)
-ingenuity = Action("ingenuity", "Ingenuity", cpCost=24, aType="countdown", activeTurns=5)
-ingenuity2 = Action("ingenuity2", "Ingenuity II", cpCost=32, aType="countdown", activeTurns=5)
+innerQuiet = Action("innerQuiet", "Inner Quiet", cpCost=18, aType="countup", cls="All", level=11)
+manipulation = Action("manipulation", "Manipulation", cpCost=88, aType='countdown', activeTurns=3, cls="Goldsmith", level=15)
+comfortZone = Action("comfortZone", "Comfort Zone", cpCost=66, aType='countdown', activeTurns=10, cls="Alchemist", level=50)
+steadyHand = Action("steadyHand", "Steady Hand", cpCost=22, aType='countdown', activeTurns=5, cls="All", level=9)
+steadyHand2 = Action("steadyHand2", "Steady Hand II", cpCost=25, aType='countdown', activeTurns=5, cls="Culinarian", level=37)
+wasteNot = Action("wasteNot", "Waste Not", cpCost=56, aType='countdown', activeTurns=4, cls="Leatherworker", level=15)
+wasteNot2 = Action("wasteNot2", "Waste Not II", cpCost=98, aType='countdown', activeTurns=8, cls="Leatherworker", level=50)
+innovation = Action("innovation", "Innovation", cpCost=18, aType='countdown', activeTurns=3, cls="Goldsmith", level=50)
+greatStrides = Action("greatStrides", "Great Strides", cpCost=32, aType='countdown', activeTurns=3, cls="All", level=21)
+ingenuity = Action("ingenuity", "Ingenuity", cpCost=24, aType="countdown", activeTurns=5, cls="Blacksmith", level=15)
+ingenuity2 = Action("ingenuity2", "Ingenuity II", cpCost=32, aType="countdown", activeTurns=5, cls="Blacksmith", level=50)
 
 allActions = {}
 for k, v in globals().items():
@@ -1003,11 +1006,11 @@ def mainRecipeWrapper():
     monteCarloIterations = 500
     myLeatherWorkerActions = [basicSynth, basicTouch, mastersMend, innerQuiet, steadyHand, hastyTouch, tricksOfTheTrade,
                  rumination, wasteNot, manipulation, standardTouch, carefulSynthesis, mastersMend2, greatStrides, observe]
-    myLeatherWorker = Crafter(25, 136, 137, 252, myLeatherWorkerActions) # Leatherworker
+    myLeatherWorker = Crafter("Leatherworker", 25, 136, 137, 252, myLeatherWorkerActions) # Leatherworker
 
     myWeaverActions = [basicSynth, basicTouch, mastersMend, steadyHand, innerQuiet, hastyTouch, tricksOfTheTrade,
                  rumination, wasteNot, manipulation, carefulSynthesis, observe, standardTouch]
-    myWeaver = Crafter(20, 119, 117, 243, myWeaverActions) # Weaver
+    myWeaver = Crafter("Weaver", 20, 119, 117, 243, myWeaverActions) # Weaver
 
     cottonYarn = Recipe(12,26,40,0,702)
     cottonCloth = Recipe(13,27,40,0,726)
