@@ -161,7 +161,7 @@ class EffectTracker:
         self.toggles = {}
 
 class State:
-    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False, trickOk=False, crossClassActionList=[]):
+    def __init__(self, step=0, action="", durabilityState=0, cpState=0, qualityState=0, progressState=0, wastedActions=0, progressOk=False, cpOk=False, durabilityOk=False, trickOk=False, crossClassActionList=None):
         self.step = step
         self.action = action
         self.durabilityState = durabilityState
@@ -173,7 +173,10 @@ class State:
         self.cpOk = cpOk
         self.durabilityOk = durabilityOk
         self.trickOk = trickOk
-        self.crossClassActionList = crossClassActionList
+        if crossClassActionList is None:
+            self.crossClassActionList = []
+        else:
+            self.crossClassActionList = crossClassActionList
 
 # Probabalistic Simulation Function
 def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
