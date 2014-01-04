@@ -43,7 +43,7 @@ def runSolver(settings, progressFeedback=None):
 
     try:
         crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
-        crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'],
+        crafter = main.Crafter(settings['recipe']['cls'], settings['crafter']['level'], settings['crafter']['craftsmanship'],
                                settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
         recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'],
                              settings['recipe']['durability'], settings['recipe']['startQuality'],
@@ -112,7 +112,7 @@ class SimulationHandler(BaseHandler):
 
         try:
             crafterActions = [main.allActions[a] for a in settings['crafter']['actions']]
-            crafter = main.Crafter(settings['crafter']['level'], settings['crafter']['craftsmanship'],
+            crafter = main.Crafter(settings['recipe']['cls'], settings['crafter']['level'], settings['crafter']['craftsmanship'],
                                    settings['crafter']['control'], settings['crafter']['cp'], crafterActions)
             recipe = main.Recipe(settings['recipe']['level'], settings['recipe']['difficulty'],
                                  settings['recipe']['durability'], settings['recipe']['startQuality'],
