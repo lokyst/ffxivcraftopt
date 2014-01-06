@@ -1,6 +1,6 @@
 # ffxivcraftopt - The FFXIV Crafting Optimizer
 
-Given the crafter's details, a list of available actions and the details of the recipe, the FFXIV Crafting Optimizer uses a genetic algorithm based on the [DEAP]((https://code.google.com/p/deap/) library to determine a sequence of actions that will maximize the expected value of the final quality of the synthesis. Because the solver is not deterministic and crafting itself has random elements, the solution provided is not guaranteed, especially if Tricks of the Trade is used. Use at your own risk!
+Given the crafter's details, a list of available actions and the details of the recipe, the FFXIV Crafting Optimizer uses a genetic algorithm based on the [DEAP](https://code.google.com/p/deap/) library to determine a sequence of actions that will maximize the expected value of the final quality of the synthesis. Because the solver is not deterministic and crafting itself has random elements, the solution provided is not guaranteed, especially if Tricks of the Trade is used. Use at your own risk!
 
 ## How to use ffxivcraftopt
 
