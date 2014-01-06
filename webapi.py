@@ -89,6 +89,27 @@ def runSolver(settings, progressFeedback=None):
     return result
 
 
+class SolverTask(ndb.Model):
+    settings = ndb.JsonProperty()
+    generationsCompleted = ndb.IntegerProperty()
+    done = ndb.BooleanProperty()
+    result = ndb.JsonProperty()
+
+
+def runSolverTask(taskID):
+    taskKey = ndb.Key(urlsafe=taskID)
+    task = taskKey.get()
+
+    def updateProgress(generationsCompleted):
+        task.generationsCompleted = generationsCompleted
+        task.put()
+
+    result = runSolver(task.settings, progressFeedback=updateProgress)
+    task.done = True
+    task.result = result
+    task.put()
+
+
 class BaseHandler(webapp2.RequestHandler):
     def options(self):
         self.response.headers['Access-Control-Allow-Methods'] = 'POST'
@@ -158,41 +179,6 @@ class SimulationHandler(BaseHandler):
 
 
 class SolverHandler(BaseHandler):
-    def post(self):
-        settings = json.loads(self.request.body)
-        logging.debug("settings=" + repr(settings))
-
-        result = runSolver(settings)
-
-        if result.has_key("error"):
-            self.response.status = 500
-
-        self.writeHeaders()
-        self.response.write(json.dumps(result))
-
-
-class AsyncSolverTask(ndb.Model):
-    settings = ndb.JsonProperty()
-    generationsCompleted = ndb.IntegerProperty()
-    done = ndb.BooleanProperty()
-    result = ndb.JsonProperty()
-
-
-def runSolverAsync(taskID):
-    taskKey = ndb.Key(urlsafe=taskID)
-    task = taskKey.get()
-
-    def updateProgress(generationsCompleted):
-        task.generationsCompleted = generationsCompleted
-        task.put()
-
-    result = runSolver(task.settings, progressFeedback=updateProgress)
-    task.done = True
-    task.result = result
-    task.put()
-
-
-class SolverAsyncHandler(BaseHandler):
     def get(self):
         taskID = self.request.get("taskID")
         taskKey = ndb.Key(urlsafe=taskID)
@@ -223,10 +209,10 @@ class SolverAsyncHandler(BaseHandler):
     def post(self):
         settings = json.loads(self.request.body)
 
-        task = AsyncSolverTask(settings=settings)
+        task = SolverTask(settings=settings)
         taskKey = task.put()
         taskID = taskKey.urlsafe()
-        deferred.defer(runSolverAsync, taskKey.urlsafe(), _queue="solverqueue", _target="solverbackend")
+        deferred.defer(runSolverTask, taskKey.urlsafe(), _queue="solverqueue", _target="solverbackend")
 
         result = {
             "taskID": taskID
@@ -241,5 +227,4 @@ class SolverAsyncHandler(BaseHandler):
 application = webapp2.WSGIApplication([
     ('/simulation', SimulationHandler),
     ('/solver', SolverHandler),
-    ('/async_solver', SolverAsyncHandler),
 ], debug=__debug__)
