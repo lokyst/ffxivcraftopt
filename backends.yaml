@@ -1,3 +1,4 @@
 backends:
 - name: solverbackend
   options: dynamic
+  instances: 5
