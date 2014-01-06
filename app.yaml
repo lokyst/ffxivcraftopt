@@ -8,5 +8,5 @@ builtins:
 - deferred: on
 
 handlers:
-- url: /(simulation|solver|async_solver).*
+- url: /(simulation|solver).*
   script: webapi.application
