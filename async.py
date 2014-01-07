@@ -70,10 +70,10 @@ def runSolver(settings, progressFeedback=None):
 
 class SolverTask(ndb.Model):
     settings = ndb.JsonProperty()
-    generationsCompleted = ndb.IntegerProperty()
+    generationsCompleted = ndb.IntegerProperty(default=0)
     lastProgressUpdate = ndb.DateTimeProperty()
-    done = ndb.BooleanProperty()
-    result = ndb.JsonProperty()
+    done = ndb.BooleanProperty(default=False)
+    result = ndb.JsonProperty(default={})
 
 
 def runSolverTask(taskID):
@@ -96,7 +96,7 @@ def runSolverTask(taskID):
 
 
 def queueTask(settings):
-    task = SolverTask(settings=settings, generationsCompleted=0, done=False)
+    task = SolverTask(settings=settings)
     taskKey = task.put()
     taskID = taskKey.urlsafe()
     deferred.defer(runSolverTask, taskKey.urlsafe(), _queue="solverqueue", _target="solverbackend")
