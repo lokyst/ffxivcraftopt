@@ -7,6 +7,8 @@ __author__ = 'Gordon Tyler <gordon@doxxx.net>'
 import logging
 import random
 import datetime
+import uuid
+
 import main
 from util import StringLogOutput
 
@@ -40,7 +42,8 @@ def runSolver(settings, progressFeedback=None):
         logOutput.write("======================\n")
 
         best, finalState, _, _, _ = main.mainGP(synth, settings['solver']['penaltyWeight'], settings['solver']['population'],
-                                       settings['solver']['generations'], seed, sequence, logOutput=logOutput, progressFeedback=progressFeedback)
+                                       settings['solver']['generations'], seed, sequence, logOutput=logOutput,
+                                       progressFeedback=progressFeedback)
 
         logOutput.write("\nMonte Carlo Result\n")
         logOutput.write("==================\n")
@@ -75,20 +78,36 @@ class SolverTask(ndb.Model):
     done = ndb.BooleanProperty(default=False)
     result = ndb.JsonProperty(default={})
 
+    @classmethod
+    def makeKey(cls, taskID):
+        return ndb.Key("SolverTask", taskID)
+
+
+class SolveTaskStopRequest(ndb.Model):
+    _use_cache = False
+
+    @classmethod
+    def makeKey(cls, taskKey, stopID):
+        return ndb.Key("SolveTaskStopRequest", stopID, parent=taskKey)
+
 
 def runSolverTask(taskID):
-    taskKey = ndb.Key(urlsafe=taskID)
-    task = taskKey.get()
+    taskKey = SolverTask.makeKey(taskID)
+    stopRequestKey = SolveTaskStopRequest.makeKey(taskKey, taskID)
 
     def updateProgress(generationsCompleted):
         # update at most once a second
         now = datetime.datetime.utcnow()
-        if task.lastProgressUpdate is None or (now - task.lastProgressUpdate).total_seconds() >= 0.9:
-            task.generationsCompleted = generationsCompleted
-            task.lastProgressUpdate = now
-            task.put()
+        freshTask = taskKey.get()
+        if freshTask.lastProgressUpdate is None or (now - freshTask.lastProgressUpdate).total_seconds() >= 0.9:
+            freshTask.generationsCompleted = generationsCompleted
+            freshTask.lastProgressUpdate = now
+            freshTask.put()
+            stopRequest = stopRequestKey.get()
+            return stopRequest is None
+        return True
 
-
+    task = taskKey.get()
     result = runSolver(task.settings, progressFeedback=updateProgress)
     task.done = True
     task.result = result
@@ -96,8 +115,33 @@ def runSolverTask(taskID):
 
 
 def queueTask(settings):
-    task = SolverTask(settings=settings)
-    taskKey = task.put()
-    taskID = taskKey.urlsafe()
-    deferred.defer(runSolverTask, taskKey.urlsafe(), _queue="solverqueue", _target="solverbackend")
+    taskID = str(uuid.uuid4())
+    taskKey = SolverTask.makeKey(taskID)
+    task = SolverTask(key=taskKey, settings=settings)
+    task.put()
+    deferred.defer(runSolverTask, taskID, _queue="solverqueue", _target="solverbackend")
     return taskID
+
+
+def stopTask(taskID):
+    if not getTask(taskID):
+        return False
+
+    taskKey = SolverTask.makeKey(taskID)
+    stopRequestKey = SolveTaskStopRequest.makeKey(taskKey, taskID)
+    stopRequest = SolveTaskStopRequest(key = stopRequestKey)
+    stopRequest.put()
+
+    return True
+
+
+def getTask(taskID):
+    taskKey = SolverTask.makeKey(taskID)
+    return taskKey.get()
+
+
+def deleteTask(taskID):
+    taskKey = SolverTask.makeKey(taskID)
+    taskKey.delete()
+    stopRequestKey = SolveTaskStopRequest.makeKey(taskKey, taskID)
+    stopRequestKey.delete()

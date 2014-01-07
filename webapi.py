@@ -12,12 +12,10 @@ import main
 import async
 from util import StringLogOutput
 
-from google.appengine.ext import ndb
-
 
 class BaseHandler(webapp2.RequestHandler):
     def options(self):
-        self.response.headers['Access-Control-Allow-Methods'] = 'POST'
+        self.response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE'
         self.response.headers['Access-Control-Allow-Origin'] = '*'
         self.response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
         self.response.headers['Content-Type'] = 'application/json'
@@ -86,9 +84,7 @@ class SimulationHandler(BaseHandler):
 class SolverHandler(BaseHandler):
     def get(self):
         taskID = self.request.get("taskID")
-        taskKey = ndb.Key(urlsafe=taskID)
-
-        task = taskKey.get()
+        task = async.getTask(taskID)
 
         if task:
             result = {
@@ -97,7 +93,7 @@ class SolverHandler(BaseHandler):
                 "result": task.result
             }
             if task.done:
-                taskKey.delete()
+                async.deleteTask(taskID)
         else:
             self.response.status = 500
             result = {
@@ -124,6 +120,26 @@ class SolverHandler(BaseHandler):
 
         self.writeHeaders()
         self.response.write(json.dumps(result))
+
+    def delete(self):
+        taskID = self.request.get("taskID")
+
+        if async.stopTask(taskID):
+            result = None
+            logging.debug("Stop requested for task: " + taskID)
+        else:
+            self.response.status = 500
+            result = {
+                "result": {
+                    "error": "Unknown task: %s" % (taskID,)
+                }
+            }
+            logging.error("Stop requested for unknown task: " + taskID)
+
+        self.writeHeaders()
+
+        if result:
+            self.response.write(json.dumps(result))
 
 
 application = webapp2.WSGIApplication([

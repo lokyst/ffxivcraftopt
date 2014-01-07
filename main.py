@@ -914,7 +914,9 @@ def gpEvolution(population, toolbox, cxpb, mutpb, ngen, stats=None,
             logger.logGeneration(evals=len(invalid_ind), gen=gen, stats=stats)
 
         if progressFeedback:
-            progressFeedback(gen)
+            if not progressFeedback(gen):
+                logOutput.write("Stop requested.\n")
+                break
 
     return population
 
