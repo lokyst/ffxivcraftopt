@@ -6,6 +6,7 @@ __author__ = 'Gordon Tyler <gordon@doxxx.net>'
 
 import logging
 import random
+import datetime
 import main
 from util import StringLogOutput
 
@@ -70,6 +71,7 @@ def runSolver(settings, progressFeedback=None):
 class SolverTask(ndb.Model):
     settings = ndb.JsonProperty()
     generationsCompleted = ndb.IntegerProperty()
+    lastProgressUpdate = ndb.DateTimeProperty()
     done = ndb.BooleanProperty()
     result = ndb.JsonProperty()
 
@@ -79,8 +81,13 @@ def runSolverTask(taskID):
     task = taskKey.get()
 
     def updateProgress(generationsCompleted):
-        task.generationsCompleted = generationsCompleted
-        task.put()
+        # update at most once a second
+        now = datetime.datetime.utcnow()
+        if task.lastProgressUpdate is None or (now - task.lastProgressUpdate).total_seconds() >= 0.9:
+            task.generationsCompleted = generationsCompleted
+            task.lastProgressUpdate = now
+            task.put()
+
 
     result = runSolver(task.settings, progressFeedback=updateProgress)
     task.done = True
