@@ -106,7 +106,7 @@ class SolverHandler(BaseHandler):
                 }
             }
 
-        logging.debug("SolverAsyncHandler.get: result=" + repr(result))
+        logging.debug("SolverHandler.get: result=" + repr(result))
 
         self.writeHeaders()
         self.response.write(json.dumps(result))
@@ -120,7 +120,7 @@ class SolverHandler(BaseHandler):
             "taskID": taskID
         }
 
-        logging.debug("SolverAsyncHandler.post: result=" + repr(result))
+        logging.debug("SolverHandler.post: result=" + repr(result))
 
         self.writeHeaders()
         self.response.write(json.dumps(result))
