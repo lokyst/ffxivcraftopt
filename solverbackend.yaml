@@ -1,0 +1,17 @@
+application: ffxiv-craft-opt
+module: solverbackend
+version: 2
+api_version: 1
+runtime: python27
+threadsafe: true
+
+builtins:
+- deferred: on
+
+basic_scaling:
+  max_instances: 5
+
+handlers:
+- script: webapi.application
+  secure: optional
+  url: /(simulation|solver).*
