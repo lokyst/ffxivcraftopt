@@ -6,7 +6,7 @@ Given the crafter's details, a list of available actions and the details of the 
 
 After setting up Crafter, Recipe and Synthesis objects, the function mainGP can be used to run a Genetic Program to find a sequence that will maximize the final quality. See mainRecipeWrapper in main.py for an example.
 
-It also provides a web service interface as a google app engine module in webapi.py. The web user interface project is at [ffxiv-craft-opt-web](https://github.com/doxxx/ffxiv-craft-opt-web).
+It also provides a web service interface as a google app engine module in webapi.py. The web user interface project is at [ffxiv-craft-opt-web](https://github.com/doxxx/ffxiv-craft-opt-web), which is live at http://ffxiv.lokyst.net/.
 
 ## References for crafting formulae etc.
 
