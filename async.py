@@ -119,7 +119,7 @@ def queueTask(settings):
     taskKey = SolverTask.makeKey(taskID)
     task = SolverTask(key=taskKey, settings=settings)
     task.put()
-    deferred.defer(runSolverTask, taskID, _queue="solverqueue", _target="solverbackend")
+    deferred.defer(runSolverTask, taskID, _queue="solverqueue")
     return taskID
 
 
