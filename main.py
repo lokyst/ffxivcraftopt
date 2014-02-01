@@ -567,7 +567,7 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
 
             # Increment countups
             if action.qualityIncreaseMultiplier > 0 and innerQuiet.name in effects.countUps:
-                effects.countUps[innerQuiet.name] += 1 * successProbability
+                effects.countUps[innerQuiet.name] += 1 * success
 
             # Initialize new effects after countdowns are managed to reset them properly
             if action.type == "countup":
