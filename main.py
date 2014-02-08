@@ -202,7 +202,7 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
     ppGood = 0
     ppExcellent = 0
     ppPoor = 0
-    ppNormal = 1 - (pGood + pExcellent + pPoor)
+    ppNormal = 1 - (ppGood + ppExcellent + ppPoor)
 
     # End state checks
     progressOk = False
