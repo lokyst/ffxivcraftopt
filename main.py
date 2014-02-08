@@ -268,7 +268,7 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
 
         bQualityGain = qualityIncreaseMultiplier * synth.CalculateBaseQualityIncrease(levelDifference, control)
         qualityGain = successProbability * bQualityGain
-        if action == byregotsBlessing:
+        if action == byregotsBlessing and innerQuiet.name in effects.countUps:
             qualityGain *= (1 + 0.2 * effects.countUps[innerQuiet.name])
 
         durabilityCost = action.durabilityCost
@@ -503,7 +503,7 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
 
         bQualityGain = qualityIncreaseMultiplier * synth.CalculateBaseQualityIncrease(levelDifference, control)
         qualityGain = success * bQualityGain
-        if action == byregotsBlessing:
+        if action == byregotsBlessing and innerQuiet.name in effects.countUps:
             qualityGain *= (1 + 0.2 * effects.countUps[innerQuiet.name])
 
         durabilityCost = action.durabilityCost
