@@ -215,12 +215,12 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
                            wastedActions, progressOk, cpOk, durabilityOk, trickOk, crossClassActionList)
 
     if verbose:
-        logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
-        logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
+        logger.log("%2s %-20s %5s %5s %8s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
+        logger.log("%2i %-20s %5i %5i %8.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
 
     if debug:
-        logger.log("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
-        logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
+        logger.log("%2s %-20s %5s %5s %8s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
+        logger.log("%2i %-20s %5i %5i %8.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
 
     for action in individual:
         # Occur regardless of dummy actions
@@ -357,13 +357,13 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
                 crossClassActionList.append(action)
 
         if verbose:
-            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
+            logger.log("%2i %-20s %5i %5i %8.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
         if debug:
             iqCnt = 0
             if innerQuiet.name in effects.countUps:
                 iqCnt = effects.countUps[innerQuiet.name]
-            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
+            logger.log("%2i %-20s %5i %5i %8.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
 
     # Penalise failure outcomes
     if progressState >= synth.recipe.difficulty:
@@ -382,10 +382,10 @@ def simSynth(individual, synth, verbose=True, debug=False, logOutput=None):
                        wastedActions, progressOk, cpOk, durabilityOk, trickOk, crossClassActionList)
 
     if verbose:
-        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s, Cross Class Skills: %i" % (progressOk, durabilityOk, cpOk, trickOk, len(crossClassActionList)))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s, Cross Class Skills: %i, Wasted Actions: %i" % (progressOk, durabilityOk, cpOk, trickOk, len(crossClassActionList), wastedActions))
 
     if debug:
-        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s" % (progressOk, durabilityOk, cpOk, trickOk))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s, Cross Class Skills: %i, Wasted Actions: %i" % (progressOk, durabilityOk, cpOk, trickOk, len(crossClassActionList), wastedActions))
 
     return finalState
 
@@ -424,12 +424,12 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
                            wastedActions, progressOk, cpOk, durabilityOk, trickOk, crossClassActionList)
 
     if verbose:
-        logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
-        logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
+        logger.log("%2s %-20s %5s %5s %8s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC"))
+        logger.log("%2i %-20s %5i %5i %8.1f %5.1f %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions))
 
     if debug:
-        logger.log("%2s %-20s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
-        logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
+        logger.log("%2s %-20s %5s %5s %8s %5s %5s %5s %5s %5s %5s %5s" % ("#", "Action", "DUR", "CP", "EQUA", "EPRG", "WAC", "IQ", "CTL", "QINC", "BPRG", "BQUA"))
+        logger.log("%2i %-20s %5i %5i %8.1f %5.1f %5i %5.1f %5i %5i" % (stepCount, "", durabilityState, cpState, qualityState, progressState, wastedActions, 0, synth.crafter.control, 0))
 
     for action in individual:
         # Occur regardless of dummy actions
@@ -585,13 +585,13 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
                 crossClassActionList.append(action)
 
         if verbose:
-            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
+            logger.log("%2i %-20s %5i %8i %5.1f %5.1f %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions))
 
         if debug:
             iqCnt = 0
             if innerQuiet.name in effects.countUps:
                 iqCnt = effects.countUps[innerQuiet.name]
-            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
+            logger.log("%2i %-20s %5i %5i %8.1f %5.1f %5i %5.1f %5i %5i %5i %5i" % (stepCount, action.name, durabilityState, cpState, qualityState, progressState, wastedActions, iqCnt, control, qualityGain, bProgressGain, bQualityGain))
 
     # Penalise failure outcomes
     if progressState >= synth.recipe.difficulty:
@@ -610,10 +610,10 @@ def MonteCarloSynth(individual, synth, verbose=True, debug=False, logOutput=None
                        wastedActions, progressOk, cpOk, durabilityOk, trickOk, crossClassActionList)
 
     if verbose:
-        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s, Cross Class Skills: %i" % (progressOk, durabilityOk, cpOk, trickOk, len(crossClassActionList)))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s, Cross Class Skills: %i, Wasted Actions: %i" % (progressOk, durabilityOk, cpOk, trickOk, len(crossClassActionList), wastedActions))
 
     if debug:
-        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s" % (progressOk, durabilityOk, cpOk))
+        logger.log("Progress Check: %s, Durability Check: %s, CP Check: %s, Tricks Check: %s, Cross Class Skills: %i, Wasted Actions: %i" % (progressOk, durabilityOk, cpOk, trickOk, len(crossClassActionList), wastedActions))
 
     return finalState
 
@@ -630,7 +630,7 @@ def MonteCarloSim(individual, synth, nRuns=100, seed=None, verbose=False, debug=
         finalStateTracker.append(runSynth)
 
         if verbose:
-            logger.log("%2i %-20s %5i %5i %5.1f %5.1f %5i" % (i, "MonteCarlo", runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState, runSynth.wastedActions))
+            logger.log("%2i %-20s %5i %5i %8.1f %5.1f %5i" % (i, "MonteCarlo", runSynth.durabilityState, runSynth.cpState, runSynth.qualityState, runSynth.progressState, runSynth.wastedActions))
 
     avgDurability = sum([x.durabilityState for x in finalStateTracker])/nRuns
     avgCp = sum([x.cpState for x in finalStateTracker])/nRuns
@@ -638,8 +638,8 @@ def MonteCarloSim(individual, synth, nRuns=100, seed=None, verbose=False, debug=
     avgProgress = sum([x.progressState for x in finalStateTracker])/nRuns
     avgHqPercent = getAverageHqPercent(finalStateTracker, synth)
 
-    logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("", "", "DUR", "CP", "QUA", "PRG", "HQ%"))
-    logger.log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress, avgHqPercent))
+    logger.log("%2s %-20s %5s %5s %8s %5s %5s" % ("", "", "DUR", "CP", "QUA", "PRG", "HQ%"))
+    logger.log("%2s %-20s %5i %5i %8.1f %5.1f %5i" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress, avgHqPercent))
 
     minDurability = min([x.durabilityState for x in finalStateTracker])
     minCp = min([x.cpState for x in finalStateTracker])
@@ -648,7 +648,7 @@ def MonteCarloSim(individual, synth, nRuns=100, seed=None, verbose=False, debug=
     minQualityPercent = minQuality/synth.recipe.maxQuality * 100
     minHqPercent = hqPercentFromQuality(minQualityPercent)
 
-    logger.log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress, minHqPercent))
+    logger.log("%2s %-20s %5i %5i %8.1f %5.1f %5i" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress, minHqPercent))
 
 def getAverageHqPercent(stateArray, mySynth):
     nHQ = 0
