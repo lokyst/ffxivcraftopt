@@ -636,8 +636,7 @@ def MonteCarloSim(individual, synth, nRuns=100, seed=None, verbose=False, debug=
     avgCp = sum([x.cpState for x in finalStateTracker])/nRuns
     avgQuality = sum([x.qualityState for x in finalStateTracker])/nRuns
     avgProgress = sum([x.progressState for x in finalStateTracker])/nRuns
-    avgQualityPercent = avgQuality/synth.recipe.maxQuality * 100
-    avgHqPercent = hqPercentFromQuality(avgQualityPercent)
+    avgHqPercent = getAverageHqPercent(finalStateTracker, synth)
 
     logger.log("%2s %-20s %5s %5s %5s %5s %5s" % ("", "", "DUR", "CP", "QUA", "PRG", "HQ%"))
     logger.log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Expected Value: ", avgDurability, avgCp, avgQuality, avgProgress, avgHqPercent))
@@ -650,6 +649,17 @@ def MonteCarloSim(individual, synth, nRuns=100, seed=None, verbose=False, debug=
     minHqPercent = hqPercentFromQuality(minQualityPercent)
 
     logger.log("%2s %-20s %5i %5i %5.1f %5.1f %5i" % ("##", "Min Value: ", minDurability, minCp, minQuality, minProgress, minHqPercent))
+
+def getAverageHqPercent(stateArray, mySynth):
+    nHQ = 0
+    for result in stateArray:
+        qualityPercent = result.qualityState / mySynth.recipe.maxQuality
+        hqProbability = hqPercentFromQuality(qualityPercent) / 100;
+        hqRand = random.uniform(0,1)
+        if hqRand < hqProbability:
+            nHQ += 1
+
+    return nHQ / len(stateArray) * 100
 
 def generateInitialGuess(synth, seqLength):
     nSynths = math.ceil(synth.recipe.difficulty / (0.9*synth.CalculateBaseProgressIncrease((synth.crafter.level-synth.recipe.level), synth.crafter.craftsmanship)) )
